@@ -137,6 +137,12 @@ app.use('/api/v1/customer', customerRoutes);
 app.use('/api/v1/csc', cscRoutes);
 app.use('/api/v1/desktop', desktopRoutes);
 
+// Public Web Route Redirects (in case customer scans QR pointing to backend API domain)
+app.get(['/kiosk/:slug', '/kiosk', '/order/:token', '/order', '/track/:orderId', '/track'], (req, res) => {
+  const clientBase = env.CLIENT_URL || 'https://primeidpro.online';
+  return res.redirect(302, `${clientBase}${req.originalUrl}`);
+});
+
 // Root greeting
 app.get('/', (req, res) => {
   return ApiResponse.success(res, {
