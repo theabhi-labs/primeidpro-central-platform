@@ -6,6 +6,11 @@ const deviceAuthMiddleware = require('../middleware/deviceAuthMiddleware');
 // Auto-updater check (public/authenticated)
 router.get('/update', deviceController.checkUpdate);
 
+// Device Pairing & Registration
+router.post('/pair', deviceController.registerDevice);
+router.post('/devices/pair', deviceController.registerDevice);
+router.post('/devices/register', deviceController.registerDevice);
+
 // App Job Processing Endpoints (require device authentication)
 router.get('/pending-jobs', deviceAuthMiddleware, deviceController.getPendingJobs);
 router.post('/jobs/:jobId/ack', deviceAuthMiddleware, deviceController.acknowledgeJob);

@@ -7,111 +7,13 @@ const jobEngineService = require('../services/jobEngineService');
 const { generateDeviceToken } = require('../utils/jwt');
 const ApiResponse = require('../utils/apiResponse');
 const { DEVICE_STATUS, JOB_STATUS } = require('../config/constants');
-const logger = require('../utils/logger');
+const deviceController = require('./deviceController');
 
 /**
  * Registers or pairs an Electron desktop application with a CSC Studio Center
  */
 const registerOrPairDevice = async (req, res, next) => {
-  try {
-    const { installationId, pairingCode, centerCode, deviceName, hardwareFingerprint, appVersion, osPlatform } = req.body;
-
-    if (!installationId) {
-      return ApiResponse.error(res, 'installationId is required', 400);
-    }
-
-    let center = null;
-
-    // 1. Try pairing via 6-digit one-time pairing code
-    if (pairingCode) {
-      center = await StudioCenter.findOne({
-        'pairingCode.code': pairingCode.trim(),
-        'pairingCode.expiresAt': { $gt: new Date() },
-        isActive: true
-      });
-    }
-
-    // 2. Fallback to centerCode if authorized
-    if (!center && centerCode) {
-      center = await StudioCenter.findOne({
-        centerCode: centerCode.trim().toUpperCase(),
-        isActive: true
-      });
-    }
-
-    if (!center) {
-      return ApiResponse.error(
-        res,
-        'Invalid or expired pairing code. Please generate a fresh pairing code from the Studio Portal.',
-        400
-      );
-    }
-
-    // 3. Find or create device record
-    let device = await Device.findOne({
-      centerId: center._id,
-      installationId
-    });
-
-    const generatedDeviceId = device ? device.deviceId : `PIP-DEV-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-
-    if (!device) {
-      device = new Device({
-        centerId: center._id,
-        installationId,
-        deviceId: generatedDeviceId,
-        deviceName: deviceName || 'Prime ID Pro Desktop Client',
-        hardwareFingerprint: hardwareFingerprint || '',
-        appVersion: appVersion || '1.0.0',
-        status: DEVICE_STATUS.ACTIVE,
-        metrics: {
-          osPlatform: osPlatform || 'win32'
-        }
-      });
-    } else {
-      device.deviceName = deviceName || device.deviceName;
-      device.hardwareFingerprint = hardwareFingerprint || device.hardwareFingerprint;
-      device.appVersion = appVersion || device.appVersion;
-      device.status = DEVICE_STATUS.ACTIVE;
-    }
-
-    // Generate permanent device JWT token
-    const token = generateDeviceToken({
-      id: device._id,
-      centerId: center._id,
-      installationId,
-      deviceId: generatedDeviceId
-    });
-
-    device.authToken = token;
-    device.lastSeenAt = new Date();
-    await device.save();
-
-    // Clear pairing code once paired
-    if (pairingCode) {
-      center.pairingCode = { code: null, expiresAt: null };
-      await center.save();
-    }
-
-    logger.info(`[DesktopController] Desktop paired successfully: ${generatedDeviceId} to Center ${center.centerCode}`);
-
-    return ApiResponse.success(
-      res,
-      {
-        deviceId: generatedDeviceId,
-        deviceToken: token,
-        center: {
-          id: center._id,
-          centerName: center.centerName,
-          centerCode: center.centerCode,
-          walletBalance: center.walletBalance
-        }
-      },
-      'Desktop paired successfully with Studio Center'
-    );
-  } catch (err) {
-    next(err);
-  }
+  return deviceController.registerDevice(req, res, next);
 };
 
 /**

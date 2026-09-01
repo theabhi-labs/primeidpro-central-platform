@@ -19,27 +19,26 @@ class DeviceController {
    */
   async registerDevice(req, res) {
     try {
-      const {
-        installationId,
-        pairingCode,
-        deviceName,
-        hardwareFingerprint,
-        appVersion = '1.0.0',
-        osPlatform = 'win32'
-      } = req.body;
+      const rawCode = req.body.pairingCode || req.body.pairingPin || req.body.pin || req.body.code;
+      const pairingCode = typeof rawCode === 'string' ? rawCode.trim() : (rawCode ? String(rawCode).trim() : '');
+      const installationId = req.body.installationId || req.body.machineId || req.body.hardwareFingerprint || req.body.deviceId || `inst_${crypto.randomUUID()}`;
+      const deviceName = req.body.deviceName || req.body.terminalLabel || req.body.label || req.body.pcLabel || 'Front Counter PC';
+      const hardwareFingerprint = req.body.hardwareFingerprint || req.body.fingerprint || '';
+      const appVersion = req.body.appVersion || '1.0.0';
+      const osPlatform = req.body.osPlatform || req.body.platform || 'win32';
 
-      if (!installationId || !pairingCode) {
-        return ApiResponse.error(res, 'Installation ID and 6-digit Pairing Code are required', 400);
+      if (!pairingCode) {
+        return ApiResponse.error(res, '6-digit Pairing Code is required', 400);
       }
 
       // 1. Verify Pairing Code
       const center = await Center.findOne({
-        pairingCode: pairingCode.trim(),
+        pairingCode,
         pairingCodeExpiresAt: { $gt: new Date() }
       });
 
       if (!center) {
-        return ApiResponse.error(res, 'Invalid or expired 6-digit pairing code', 400);
+        return ApiResponse.error(res, 'Invalid or expired 6-digit pairing code. Please generate a fresh code from your CSC Operator Portal.', 400);
       }
 
       if (center.status === 'SUSPENDED' || center.status === 'BLOCKED') {
@@ -116,8 +115,10 @@ class DeviceController {
       return ApiResponse.success(res, {
         deviceId: device.deviceId,
         deviceToken,
+        token: deviceToken,
         center: {
           id: center._id,
+          _id: center._id,
           centerName: center.centerName,
           centerCode: center.centerCode,
           walletBalance: center.walletBalance

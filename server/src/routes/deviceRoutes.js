@@ -6,6 +6,7 @@ const { deviceLimiter } = require('../middleware/rateLimiter');
 
 // Public device pairing & activation endpoints
 router.post('/register', deviceLimiter, deviceController.registerDevice);
+router.post('/pair', deviceLimiter, deviceController.registerDevice);
 router.post('/activate', deviceLimiter, deviceController.activateDevice);
 
 // Authenticated device endpoints
