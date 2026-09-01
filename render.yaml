@@ -1,0 +1,74 @@
+services:
+  # -------------------------------------------------------------
+  # 1. PRIME ID PRO — Central API Server (Web Service)
+  # -------------------------------------------------------------
+  - type: web
+    name: primeidpro-api
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/v1/health/ready
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CLIENT_URL
+        value: https://primeidpro.online
+      - key: DOMAIN
+        value: https://api.primeidpro.online
+      - key: MONGODB_URI
+        sync: false
+      - key: USE_MEMORY_DB_FALLBACK
+        value: "false"
+      - key: JWT_SECRET
+        sync: false
+      - key: DEVICE_JWT_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: PAYMENT_TEST_MODE
+        value: "false"
+      - key: STORAGE_DRIVER
+        value: R2
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_REGION
+        value: auto
+      - key: PHOTO_RETENTION_MINUTES
+        value: "10"
+      - key: UPLOAD_RETENTION_HOURS
+        value: "2"
+      - key: SIGNED_URL_EXPIRES_SECONDS
+        value: "900"
+      - key: CLEANUP_INTERVAL_MS
+        value: "60000"
+
+  # -------------------------------------------------------------
+  # 2. PRIME ID PRO — Web Client (Static Site)
+  # -------------------------------------------------------------
+  - type: static_site
+    name: primeidpro-client
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://api.primeidpro.online/api/v1

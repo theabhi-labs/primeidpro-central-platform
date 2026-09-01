@@ -1,0 +1,44 @@
+{
+  "name": "primeidpro-central-server",
+  "version": "1.0.0",
+  "description": "Central Web Platform Backend API for Prime ID Pro (primeidpro.online)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/utils/seeder.js",
+    "test": "node tests/run-verification.js && node tests/phase2a-verification.js && node tests/financial-integrity.test.js && node tests/r2-storage.test.js && node tests/production-hardening.test.js && node tests/staging-external-verification.test.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1123.0",
+    "@aws-sdk/s3-request-presigner": "^3.1123.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb-memory-server": "^9.2.0",
+    "mongoose": "^8.4.3",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.3",
+    "razorpay": "^2.9.4",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "keywords": [
+    "primeidpro",
+    "passport-photo",
+    "id-card",
+    "csc",
+    "razorpay"
+  ],
+  "author": "Prime ID Pro Team",
+  "license": "ISC"
+}
