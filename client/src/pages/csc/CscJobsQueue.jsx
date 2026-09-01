@@ -5,11 +5,13 @@ import {
   RefreshCw,
   Eye,
   CheckCircle2,
+  CheckCircle,
   Clock,
   AlertCircle,
   FileText,
   Layers,
-  Sparkles
+  Sparkles,
+  Banknote
 } from 'lucide-react';
 import { cscService } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
@@ -26,28 +28,25 @@ const CscJobsQueue = () => {
   const [pagination, setPagination] = useState({});
   const [selectedJob, setSelectedJob] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const { error, success } = useToast();
 
   const loadJobs = async () => {
     try {
       setLoading(true);
-      const res = await cscService.getJobsQueue({
-        status: statusFilter,
-        search,
+      const params = {
         page,
-        limit: 15
-      });
+        limit: 15,
+        status: statusFilter === 'ALL' ? undefined : statusFilter,
+        search: search.trim() || undefined
+      };
+      const res = await cscService.getJobsQueue(params);
       if (res.success && res.data) {
-        const orderList = Array.isArray(res.data.orders)
-          ? res.data.orders
-          : Array.isArray(res.data)
-          ? res.data
-          : [];
-        setJobs(orderList);
-        setPagination(res.data.pagination || res.pagination || {});
+        setJobs(res.data.orders || res.data.jobs || res.data);
+        setPagination(res.data.pagination || {});
       }
     } catch (err) {
-      error('Failed to load jobs queue');
+      error('Failed to load studio print queue');
     } finally {
       setLoading(false);
     }
@@ -55,7 +54,7 @@ const CscJobsQueue = () => {
 
   useEffect(() => {
     loadJobs();
-    const interval = setInterval(loadJobs, 8000); // 8s auto-refresh
+    const interval = setInterval(loadJobs, 8000); // 8s live polling
     return () => clearInterval(interval);
   }, [statusFilter, page]);
 
@@ -68,6 +67,23 @@ const CscJobsQueue = () => {
   const openDetails = (job) => {
     setSelectedJob(job);
     setDetailsModalOpen(true);
+  };
+
+  const handleMarkCashReceived = async (orderId) => {
+    if (!orderId) return;
+    try {
+      setActionLoading(true);
+      const res = await cscService.markCashReceived(orderId);
+      if (res.success) {
+        success('Cash payment confirmed! Order dispatched to desktop print queue.');
+        loadJobs();
+        if (detailsModalOpen) setDetailsModalOpen(false);
+      }
+    } catch (err) {
+      error(err.formattedMessage || err.message || 'Failed to confirm cash received');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
@@ -184,13 +200,26 @@ const CscJobsQueue = () => {
                         {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => openDetails(item)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-400 hover:text-white transition-all"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          {(item.paymentStatus === 'CASH_PENDING' || status === 'CREATED') && (
+                            <button
+                              onClick={() => handleMarkCashReceived(item.orderId || item._id)}
+                              disabled={actionLoading}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1 transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50"
+                              title="Collect Cash & Send to Printer"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              <span>Collect ₹{price} &amp; Print</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => openDetails(item)}
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-400 hover:text-white transition-all"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -257,11 +286,11 @@ const CscJobsQueue = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Payment:</span>
-                <span className="font-bold text-emerald-400">₹{selectedJob.priceInr} ({selectedJob.paymentStatus})</span>
+                <span className="font-bold text-emerald-400">₹{selectedJob.priceInr || selectedJob.totalAmount} ({selectedJob.paymentStatus})</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Status:</span>
-                <Badge status={selectedJob.jobStatus} size="sm" />
+                <Badge status={selectedJob.jobStatus || selectedJob.orderStatus} size="sm" />
               </div>
             </div>
 
@@ -275,6 +304,20 @@ const CscJobsQueue = () => {
                   className="w-36 h-48 object-cover rounded-xl border border-slate-700 mx-auto shadow-lg"
                 />
               </div>
+            )}
+
+            {/* Cash Confirmation Action Button */}
+            {(selectedJob.paymentStatus === 'CASH_PENDING' || selectedJob.jobStatus === 'CREATED' || selectedJob.orderStatus === 'CREATED') && (
+              <Button
+                onClick={() => handleMarkCashReceived(selectedJob.orderId || selectedJob._id || selectedJob.id)}
+                icon={CheckCircle}
+                variant="emerald"
+                size="md"
+                className="w-full"
+                isLoading={actionLoading}
+              >
+                Confirm Cash (₹{selectedJob.totalAmount || selectedJob.priceInr}) &amp; Send to Printer
+              </Button>
             )}
 
             {/* Status History Timeline */}
