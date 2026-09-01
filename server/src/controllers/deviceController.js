@@ -45,14 +45,16 @@ class DeviceController {
         return ApiResponse.error(res, 'Studio Center account is suspended or blocked', 403);
       }
 
-      // Ensure installation is not already active under a different center
+      // If this installation was previously bound to another center, revoke the old binding
       const boundToOtherCenter = await Device.findOne({
         installationId,
         centerId: { $ne: center._id },
         status: { $in: ['ACTIVE', 'PENDING'] }
       });
       if (boundToOtherCenter) {
-        return ApiResponse.error(res, 'This installation is already bound to another center. Revoke the existing device binding first.', 400);
+        boundToOtherCenter.status = 'REVOKED';
+        await boundToOtherCenter.save();
+        logger.info(`[DeviceController] Revoked previous center binding for installation ${installationId}`);
       }
 
       // 2. Generate unique Device ID
