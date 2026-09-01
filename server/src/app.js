@@ -138,9 +138,24 @@ app.use('/api/v1/csc', cscRoutes);
 app.use('/api/v1/desktop', desktopRoutes);
 
 // Public Web Route Redirects (in case customer scans QR pointing to backend API domain)
-app.get(['/kiosk/:slug', '/kiosk', '/order/:token', '/order', '/track/:orderId', '/track'], (req, res) => {
-  const clientBase = env.CLIENT_URL || 'https://primeidpro.online';
-  return res.redirect(302, `${clientBase}${req.originalUrl}`);
+app.get([
+  '/kiosk/:slug',
+  '/kiosk',
+  '/order/:token',
+  '/order',
+  '/track/:orderId',
+  '/track',
+  '/api/v1/order/:token',
+  '/api/v1/order',
+  '/api/v1/kiosk/:slug',
+  '/api/v1/kiosk'
+], (req, res) => {
+  let clientBase = 'https://www.primeidpro.online';
+  if (env.CLIENT_URL && !env.CLIENT_URL.includes('api.')) {
+    clientBase = env.CLIENT_URL.replace(/\/api(\/v\d+)?\/?$/, '').replace(/\/$/, '');
+  }
+  const cleanPath = req.originalUrl.replace(/^\/api\/v1/, '');
+  return res.redirect(302, `${clientBase}${cleanPath}`);
 });
 
 // Root greeting

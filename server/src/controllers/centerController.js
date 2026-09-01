@@ -391,7 +391,11 @@ class CenterController {
         await center.save();
       }
 
-      const kioskUrl = `${env.CLIENT_URL || env.DOMAIN || 'https://primeidpro.online'}/order/${center.qrToken}`;
+      let publicDomain = 'https://www.primeidpro.online';
+      if (env.CLIENT_URL && !env.CLIENT_URL.includes('api.')) {
+        publicDomain = env.CLIENT_URL.replace(/\/api(\/v\d+)?\/?$/, '').replace(/\/$/, '');
+      }
+      const kioskUrl = `${publicDomain}/order/${center.qrToken}`;
       const qrDataUrl = await QRCode.toDataURL(kioskUrl, {
         errorCorrectionLevel: 'H',
         margin: 2,

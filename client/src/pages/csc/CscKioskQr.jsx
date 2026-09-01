@@ -40,9 +40,15 @@ const CscKioskQr = () => {
     window.print();
   };
 
+  const displayKioskUrl = qrData?.kioskUrl
+    ? (qrData.kioskUrl.includes('api.primeidpro.online')
+        ? qrData.kioskUrl.replace('api.primeidpro.online/api/v1', 'www.primeidpro.online').replace('api.primeidpro.online', 'www.primeidpro.online')
+        : qrData.kioskUrl)
+    : `${window.location.origin}/order/${qrData?.qrToken || qrData?.slug || ''}`;
+
   const handleCopyLink = () => {
-    if (!qrData?.kioskUrl) return;
-    navigator.clipboard.writeText(qrData.kioskUrl);
+    if (!displayKioskUrl) return;
+    navigator.clipboard.writeText(displayKioskUrl);
     success('Kiosk direct link copied to clipboard!');
   };
 
@@ -113,8 +119,8 @@ const CscKioskQr = () => {
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-500 font-mono">
-            {qrData.kioskUrl}
+          <div className="text-[11px] text-slate-500 font-mono break-all">
+            {displayKioskUrl}
           </div>
         </div>
       ) : (
