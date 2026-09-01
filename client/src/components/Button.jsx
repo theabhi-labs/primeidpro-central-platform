@@ -18,6 +18,8 @@ const Button = ({
       'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 border border-indigo-500/50',
     emerald:
       'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30 border border-emerald-500/50',
+    amber:
+      'bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-bold shadow-lg shadow-amber-500/30 border border-amber-400/50',
     secondary:
       'bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 border border-slate-700/80',
     danger:

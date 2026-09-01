@@ -8,6 +8,7 @@ import {
   Sparkles,
   Store,
   CreditCard,
+  Banknote,
   Layers,
   Crop,
   ShieldCheck,
@@ -38,6 +39,9 @@ const CustomerOrderPage = () => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [copies, setCopies] = useState(8);
+
+  // Payment method selection ('RAZORPAY' | 'CASH')
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('RAZORPAY');
 
   // Photo & Crop States
   const [photoFile, setPhotoFile] = useState(null);
@@ -178,7 +182,7 @@ const CustomerOrderPage = () => {
         photoUrl: uploadedPhotoUrl,
         cropSettings,
         backgroundColor,
-        paymentMethod: 'RAZORPAY'
+        paymentMethod: selectedPaymentMethod
       };
 
       const orderRes = await customerService.createOrder(orderPayload);
@@ -190,6 +194,15 @@ const CustomerOrderPage = () => {
       const job = orderRes.data.job || orderRes.data.order || {};
       const razorpayOrder = orderRes.data.razorpayOrder;
       const orderJobId = job.id || job.jobId || order.id;
+
+      // Handle Cash at Counter Order
+      if (selectedPaymentMethod === 'CASH' || !razorpayOrder) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        setCompletedOrder({ ...order, ...job, paymentMethod: 'CASH', paymentStatus: 'CASH_PENDING' });
+        setStep(5); // Success step
+        success('Order submitted! Please pay cash at the counter.');
+        return;
+      }
 
       // 2. Open Razorpay Checkout or simulate test mode
       if (razorpayOrder) {
@@ -603,6 +616,76 @@ const CustomerOrderPage = () => {
             </div>
           </div>
 
+          {/* Choose Payment Method */}
+          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+              Select Payment Option
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Option 1: Online Payment */}
+              <div
+                onClick={() => setSelectedPaymentMethod('RAZORPAY')}
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3.5 ${
+                  selectedPaymentMethod === 'RAZORPAY'
+                    ? 'border-indigo-500 bg-indigo-950/40 shadow-lg shadow-indigo-950/30 ring-1 ring-indigo-500/50'
+                    : 'border-slate-800 bg-slate-950 hover:border-slate-700 opacity-75'
+                }`}
+              >
+                <div
+                  className={`p-2.5 rounded-lg shrink-0 ${
+                    selectedPaymentMethod === 'RAZORPAY'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white">Online UPI / Card</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                      Instant Auto-Print
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Pay via GPay, PhonePe, UPI or Cards. Photo is queued for print instantly.
+                  </p>
+                </div>
+              </div>
+
+              {/* Option 2: Cash at Counter */}
+              <div
+                onClick={() => setSelectedPaymentMethod('CASH')}
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3.5 ${
+                  selectedPaymentMethod === 'CASH'
+                    ? 'border-amber-500 bg-amber-950/40 shadow-lg shadow-amber-950/30 ring-1 ring-amber-500/50'
+                    : 'border-slate-800 bg-slate-950 hover:border-slate-700 opacity-75'
+                }`}
+              >
+                <div
+                  className={`p-2.5 rounded-lg shrink-0 ${
+                    selectedPaymentMethod === 'CASH'
+                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}
+                >
+                  <Banknote className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white">Cash at Counter</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                      Pay at Shop
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Pay cash directly to the operator at the studio counter to release print.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Order Summary Receipt */}
           <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -616,7 +699,7 @@ const CustomerOrderPage = () => {
 
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>Studio: {selectedCenter?.centerName}</span>
-              <span>Online Dispatch: Free</span>
+              <span>Payment Mode: {selectedPaymentMethod === 'CASH' ? 'Cash at Counter' : 'Online Payment'}</span>
             </div>
 
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-lg font-extrabold text-white">
@@ -631,12 +714,14 @@ const CustomerOrderPage = () => {
             </Button>
             <Button
               onClick={handleProceedToPayment}
-              icon={CreditCard}
-              variant="emerald"
+              icon={selectedPaymentMethod === 'CASH' ? Banknote : CreditCard}
+              variant={selectedPaymentMethod === 'CASH' ? 'amber' : 'emerald'}
               size="lg"
               isLoading={loading}
             >
-              Pay ₹{selectedTemplate?.customerPriceInr} via Razorpay
+              {selectedPaymentMethod === 'CASH'
+                ? `Place Order & Pay ₹${selectedTemplate?.customerPriceInr} at Counter`
+                : `Pay ₹${selectedTemplate?.customerPriceInr} via UPI / Online`}
             </Button>
           </div>
         </div>
@@ -650,11 +735,26 @@ const CustomerOrderPage = () => {
           </div>
 
           <div>
-            <h2 className="text-3xl font-extrabold text-white">Order Confirmed &amp; Dispatched!</h2>
+            <h2 className="text-3xl font-extrabold text-white">
+              {completedOrder.paymentMethod === 'CASH' ? 'Order Submitted for Printing!' : 'Order Confirmed & Dispatched!'}
+            </h2>
             <p className="text-xs text-slate-400 mt-1">
-              Your photo is currently transferring to the studio's desktop application for 300 DPI native printing.
+              {completedOrder.paymentMethod === 'CASH'
+                ? 'Your order has been recorded. Please pay cash at the desk to trigger printing.'
+                : "Your photo is currently transferring to the studio's desktop application for 300 DPI native printing."}
             </p>
           </div>
+
+          {/* Cash Payment Notice if Cash Method selected */}
+          {completedOrder.paymentMethod === 'CASH' && (
+            <div className="p-4 rounded-2xl bg-amber-950/50 border border-amber-500/40 text-amber-300 text-xs flex items-center justify-center gap-3 max-w-md mx-auto text-left">
+              <Banknote className="w-6 h-6 text-amber-400 shrink-0" />
+              <div>
+                <strong className="block text-amber-200">Cash Payment Required at Counter</strong>
+                Please pay <strong>₹{completedOrder.priceInr || selectedTemplate?.customerPriceInr}</strong> to the studio counter operator and show your 4-digit PIN.
+              </div>
+            </div>
+          )}
 
           {/* Job Code & PIN Display */}
           <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 max-w-md mx-auto space-y-4">
