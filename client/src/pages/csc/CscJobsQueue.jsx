@@ -261,7 +261,7 @@ const CscJobsQueue = () => {
       <Modal
         isOpen={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
-        title={`Order Details • ${selectedJob?.jobCode}`}
+        title={`Order Details • ${selectedJob?.jobCode || selectedJob?.orderId || selectedJob?.id || ''}`}
         maxWidth="max-w-md"
       >
         {selectedJob && (
@@ -282,7 +282,7 @@ const CscJobsQueue = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Quantity:</span>
-                <span className="font-bold text-white">{selectedJob.copies} Prints</span>
+                <span className="font-bold text-white">{selectedJob.copies || selectedJob.quantity || 1} Prints</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Payment:</span>

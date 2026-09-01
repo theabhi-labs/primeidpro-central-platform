@@ -13,6 +13,7 @@ router.post('/devices/register', deviceController.registerDevice);
 
 // App Job Processing Endpoints (require device authentication)
 router.get('/pending-jobs', deviceAuthMiddleware, deviceController.getPendingJobs);
+router.get('/jobs/pending', deviceAuthMiddleware, deviceController.getPendingJobs);
 router.post('/jobs/:jobId/ack', deviceAuthMiddleware, deviceController.acknowledgeJob);
 router.post('/jobs/:jobId/status', deviceAuthMiddleware, deviceController.updateJobStatus);
 router.post('/jobs/:jobId/complete', deviceAuthMiddleware, deviceController.completeJob);

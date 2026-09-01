@@ -225,10 +225,13 @@ class DeviceController {
         return ApiResponse.error(res, 'This device authorization is revoked or suspended', 403);
       }
 
-      // Fetch ONLY QUEUED or SENT_TO_APP jobs for this specific center
+      // Fetch QUEUED, SENT_TO_APP, DISPATCHED, or CONFIRMED jobs for this center
       const jobs = await Job.find({
         centerId: device.centerId,
-        jobStatus: { $in: ['QUEUED', 'SENT_TO_APP'] }
+        $or: [
+          { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED'] } },
+          { jobStatus: 'CONFIRMED', paymentStatus: 'PAID' }
+        ]
       })
         .sort({ createdAt: 1 })
         .limit(10)

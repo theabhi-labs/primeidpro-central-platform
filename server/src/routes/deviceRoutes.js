@@ -11,5 +11,7 @@ router.post('/activate', deviceLimiter, deviceController.activateDevice);
 
 // Authenticated device endpoints
 router.post('/heartbeat', deviceAuthMiddleware, deviceController.heartbeat);
+router.get('/pending-jobs', deviceAuthMiddleware, deviceController.getPendingJobs);
+router.get('/jobs/pending', deviceAuthMiddleware, deviceController.getPendingJobs);
 
 module.exports = router;

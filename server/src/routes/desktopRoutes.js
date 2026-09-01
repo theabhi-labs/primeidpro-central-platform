@@ -9,6 +9,7 @@ router.post('/pair', deviceController.registerDevice);
 router.post('/register', deviceController.registerDevice);
 router.post('/device/heartbeat', deviceAuthMiddleware, deviceController.heartbeat);
 router.get('/jobs/pending', deviceAuthMiddleware, deviceController.getPendingJobs);
+router.get('/pending-jobs', deviceAuthMiddleware, deviceController.getPendingJobs);
 router.post('/jobs/:jobId/claim', deviceAuthMiddleware, deviceController.acknowledgeJob);
 router.post('/jobs/:jobId/ack', deviceAuthMiddleware, deviceController.acknowledgeJob);
 router.post('/jobs/:jobId/status', deviceAuthMiddleware, deviceController.updateJobStatus);

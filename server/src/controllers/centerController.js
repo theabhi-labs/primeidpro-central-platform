@@ -145,54 +145,71 @@ class CenterController {
       const centerId = req.centerId || req.user?.centerId;
       const { orderId } = req.params;
 
-      const order = await Order.findOne({
-        centerId,
+      let order = await Order.findOne({
         $or: [{ orderId }, { _id: orderId.match(/^[0-9a-fA-F]{24}$/) ? orderId : null }]
       });
 
-      if (!order) {
-        return ApiResponse.error(res, 'Order not found or not owned by this center', 404);
-      }
-
-      if (order.paymentStatus === 'PAID') {
-        return ApiResponse.error(res, 'Payment for this order is already confirmed', 400);
-      }
-
-      // Mark Payment Received
-      order.paymentStatus = 'PAID';
-      order.orderStatus = 'CONFIRMED';
-      order.cashReceivedAt = new Date();
-      order.cashReceivedBy = req.user?._id;
-      await order.save();
-
-      // Transition Job to QUEUED so desktop client receives it
-      if (order.jobId) {
-        const job = await Job.findById(order.jobId);
-        if (job) {
-          job.jobStatus = 'QUEUED';
-          job.addStatusHistory('QUEUED', 'Cash payment confirmed by operator at center counter', 'CSC_PORTAL');
-          await job.save();
+      let job = null;
+      if (order?.jobId) {
+        job = await Job.findById(order.jobId);
+      } else {
+        job = await Job.findOne({
+          $or: [
+            { jobCode: orderId },
+            { jobId: orderId },
+            { _id: orderId.match(/^[0-9a-fA-F]{24}$/) ? orderId : null }
+          ]
+        });
+        if (!order && job?.orderId) {
+          order = await Order.findById(job.orderId);
         }
       }
 
-      // Record Audit Log
-      await AuditLog.create({
-        action: 'CASH_PAYMENT_CONFIRMED',
-        performedBy: req.user?._id,
-        performedByRole: req.user?.role || 'CSC',
-        targetType: 'ORDER',
-        targetId: order._id,
-        details: { orderId: order.orderId, amount: order.totalAmount, centerId },
-        ipAddress: req.ip
-      });
+      if (!order && !job) {
+        return ApiResponse.error(res, 'Order or print job not found', 404);
+      }
 
-      logger.info(`[CenterController] Cash payment confirmed for Order #${order.orderId} by Operator ${req.user?.name}`);
+      // Mark Order as Paid
+      if (order) {
+        order.paymentStatus = 'PAID';
+        order.orderStatus = 'CONFIRMED';
+        order.cashReceivedAt = new Date();
+        order.cashReceivedBy = req.user?._id;
+        await order.save();
+      }
+
+      // Mark Job as Paid & QUEUED
+      if (job) {
+        job.paymentStatus = 'PAID';
+        job.jobStatus = 'QUEUED';
+        job.addStatusHistory('QUEUED', 'Cash payment confirmed by operator at center counter', 'CSC_PORTAL');
+        await job.save();
+      }
+
+      // Record Audit Log
+      try {
+        await AuditLog.create({
+          action: 'CASH_PAYMENT_CONFIRMED',
+          performedBy: req.user?._id,
+          performedByRole: req.user?.role || 'CSC',
+          targetType: 'ORDER',
+          targetId: order?._id || job?._id,
+          details: { orderId: order?.orderId || job?.jobCode, amount: order?.totalAmount || job?.priceInr, centerId: centerId || job?.centerId },
+          ipAddress: req.ip
+        });
+      } catch (logErr) {
+        logger.warn(`[CenterController] Audit log error: ${logErr.message}`);
+      }
+
+      logger.info(`[CenterController] Cash payment confirmed for Order #${order?.orderId || job?.jobCode} by Operator ${req.user?.name}`);
 
       return ApiResponse.success(res, {
-        orderId: order.orderId,
-        paymentStatus: order.paymentStatus,
-        orderStatus: order.orderStatus,
-        cashReceivedAt: order.cashReceivedAt
+        orderId: order?.orderId || job?.jobCode,
+        jobCode: job?.jobCode || order?.orderId,
+        paymentStatus: 'PAID',
+        orderStatus: 'CONFIRMED',
+        jobStatus: 'QUEUED',
+        cashReceivedAt: order?.cashReceivedAt || new Date()
       }, 'Cash payment marked as received. Order dispatched to desktop print queue.');
     } catch (err) {
       logger.error(`[CenterController] Cash received confirmation error: ${err.message}`);
