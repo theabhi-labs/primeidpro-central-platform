@@ -212,7 +212,7 @@ const seedDefaultData = async () => {
         version: '1.0.0',
         channel: 'stable',
         platform: 'win32',
-        downloadUrl: 'https://github.com/theabhi-labs/primeidpro-core/releases/download/v1.0.0/PrimeIdPro.exe',
+        downloadUrl: 'https://github.com/theabhi-labs/primeidpro-core/releases/download/v1.0.0/PrimeIdPro.Setup.1.0.0.exe',
         releaseNotes: 'Initial production hardened release with offline AI processing and 300 DPI native printing.',
         sha512: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
         minimumSupportedVersion: '1.0.0',

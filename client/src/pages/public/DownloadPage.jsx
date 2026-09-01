@@ -36,14 +36,14 @@ export default function DownloadPage() {
                   <ShieldCheck className="w-4 h-4 text-emerald-400" /> Digitally Signed
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <HardDrive className="w-4 h-4 text-indigo-400" /> ~215 MB Standalone Installer
+                  <HardDrive className="w-4 h-4 text-indigo-400" /> ~267 MB Standalone Installer
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col items-center gap-3 w-full md:w-auto">
               <a
-                href="https://github.com/theabhi-labs/primeidpro-core/releases/download/v1.0.0/PrimeIdPro.exe"
+                href="https://github.com/theabhi-labs/primeidpro-core/releases/download/v1.0.0/PrimeIdPro.Setup.1.0.0.exe"
                 className="w-full md:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-3 transition-all transform hover:-translate-y-0.5"
               >
                 <Download className="w-5 h-5" />
