@@ -11,6 +11,7 @@ const ApiResponse = require('../utils/apiResponse');
 const logger = require('../utils/logger');
 const QRCode = require('qrcode');
 const env = require('../config/env');
+const crypto = require('crypto');
 
 class CenterController {
   /**
@@ -56,7 +57,7 @@ class CenterController {
 
       const todayRevenue = todayRevenueAgg[0]?.total || 0;
       const onlineDevices = devices.filter(
-        (d) => d.status === 'ACTIVE' && d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() < 30000
+        (d) => d.status === 'ACTIVE' && d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() < 180000
       ).length;
 
       return ApiResponse.success(res, {
@@ -251,6 +252,39 @@ class CenterController {
   }
 
   /**
+   * CSC Studio Profile
+   * GET /api/v1/centers/me
+   */
+  async getCenterProfile(req, res) {
+    try {
+      const centerId = req.centerId || req.user?.centerId;
+      if (!centerId) {
+        return ApiResponse.error(res, 'No studio center associated with this user', 403);
+      }
+
+      const center = await Center.findById(centerId);
+      if (!center) {
+        return ApiResponse.error(res, 'Center not found', 404);
+      }
+
+      if (!center.qrToken) {
+        center.qrToken = crypto.randomBytes(16).toString('hex');
+        await center.save();
+      }
+
+      const wallet = await creditLedgerService.getOrCreateWallet(centerId);
+
+      return ApiResponse.success(res, {
+        ...center.toObject(),
+        walletBalance: wallet ? wallet.currentBalance : center.walletBalance
+      }, 'Center profile retrieved');
+    } catch (err) {
+      logger.error(`[CenterController] Profile error: ${err.message}`);
+      return ApiResponse.error(res, err.message, 500);
+    }
+  }
+
+  /**
    * Photo Service Configuration
    * GET /api/v1/centers/service-settings
    */
@@ -260,7 +294,35 @@ class CenterController {
       const center = await Center.findById(centerId);
       if (!center) return ApiResponse.error(res, 'Center not found', 404);
 
-      return ApiResponse.success(res, center.serviceSettings, 'Service settings retrieved');
+      if (!center.qrToken) {
+        center.qrToken = crypto.randomBytes(16).toString('hex');
+        await center.save();
+      }
+
+      return ApiResponse.success(res, {
+        serviceSettings: center.serviceSettings,
+        settings: center.serviceSettings,
+        pricePerPhoto: center.serviceSettings?.pricePerPhoto ?? 7,
+        minimumQuantity: center.serviceSettings?.minimumQuantity ?? 3,
+        maximumQuantity: center.serviceSettings?.maximumQuantity ?? 20,
+        quantityStep: center.serviceSettings?.quantityStep ?? 1,
+        onlinePaymentEnabled: center.serviceSettings?.onlinePaymentEnabled ?? true,
+        cashPaymentEnabled: center.serviceSettings?.cashPaymentEnabled ?? true,
+        serviceEnabled: center.serviceSettings?.serviceEnabled ?? true,
+        center: {
+          _id: center._id,
+          id: center._id,
+          centerName: center.centerName,
+          centerCode: center.centerCode,
+          slug: center.slug,
+          qrToken: center.qrToken
+        },
+        _id: center._id,
+        qrToken: center.qrToken,
+        slug: center.slug,
+        centerName: center.centerName,
+        centerCode: center.centerCode
+      }, 'Service settings retrieved');
     } catch (err) {
       return ApiResponse.error(res, err.message, 500);
     }
@@ -324,7 +386,12 @@ class CenterController {
       const center = await Center.findById(centerId);
       if (!center) return ApiResponse.error(res, 'Center not found', 404);
 
-      const kioskUrl = `${env.CLIENT_URL || 'https://primeidpro.online'}/order/${center.qrToken}`;
+      if (!center.qrToken) {
+        center.qrToken = crypto.randomBytes(16).toString('hex');
+        await center.save();
+      }
+
+      const kioskUrl = `${env.CLIENT_URL || env.DOMAIN || 'https://primeidpro.online'}/order/${center.qrToken}`;
       const qrDataUrl = await QRCode.toDataURL(kioskUrl, {
         errorCorrectionLevel: 'H',
         margin: 2,
@@ -336,6 +403,7 @@ class CenterController {
         centerName: center.centerName,
         centerCode: center.centerCode,
         qrToken: center.qrToken,
+        slug: center.slug,
         kioskUrl,
         qrDataUrl
       }, 'QR poster data generated');
@@ -388,7 +456,7 @@ class CenterController {
 
       const enriched = devices.map((d) => ({
         ...d,
-        isOnline: d.status === 'ACTIVE' && d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() < 30000
+        isOnline: d.status === 'ACTIVE' && d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() < 180000
       }));
 
       return ApiResponse.success(res, enriched, 'Devices retrieved');

@@ -79,14 +79,61 @@
 
 /* Print styles for Counter Kiosk Posters */
 @media print {
-  body {
-    background: white !important;
-    color: black !important;
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
   }
-  .no-print {
+
+  html, body, #root {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Hide entire page structure */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Make only the printable poster and its children visible */
+  .printable-poster,
+  .printable-poster * {
+    visibility: visible !important;
+  }
+
+  /* Specifically hide non-print elements, navigation, sidebar, footer, buttons */
+  nav,
+  aside,
+  footer,
+  header,
+  .no-print,
+  button,
+  [role="navigation"],
+  .toast-container {
     display: none !important;
   }
-  .print-only {
-    display: block !important;
+
+  /* Center the printable poster neatly on the printed page */
+  .printable-poster {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 100% !important;
+    max-width: 480px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 3px solid #6366f1 !important;
+    border-radius: 28px !important;
+    padding: 32px !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 auto !important;
   }
 }

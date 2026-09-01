@@ -21,7 +21,7 @@ const KioskQRModal = ({ isOpen, onClose, qrData }) => {
     <Modal isOpen={isOpen} onClose={onClose} title="Studio Counter Kiosk QR Poster" maxWidth="max-w-md">
       <div className="space-y-6">
         {/* Printable Poster Card */}
-        <div id="printable-kiosk-poster" className="p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 text-center shadow-xl">
+        <div id="printable-kiosk-poster" className="printable-poster p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 text-center shadow-xl">
           {/* Header */}
           <div className="flex items-center justify-center gap-2 mb-1">
             <span className="font-black text-xl tracking-tight text-indigo-700">PRIME ID PRO</span>

@@ -8,6 +8,10 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 router.use(authMiddleware);
 router.use(roleMiddleware(['CSC', 'CSC_OPERATOR', 'ADMIN', 'SUPER_ADMIN']));
 
+// Center Profile
+router.get('/me', centerController.getCenterProfile);
+router.get('/profile', centerController.getCenterProfile);
+
 // Dashboard
 router.get('/dashboard', centerController.getDashboard);
 

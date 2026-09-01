@@ -23,7 +23,7 @@ import Button from '../../components/Button';
 import PhotoCropperModal from '../../components/PhotoCropperModal';
 
 const CustomerOrderPage = () => {
-  const { slug } = useParams();
+  const { slug, token } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { success, error, info } = useToast();
@@ -71,21 +71,41 @@ const CustomerOrderPage = () => {
           setCopies(tplRes.data[0].defaultCopies || 8);
         }
 
-        if (centerRes.success && centerRes.data) {
-          setCenters(centerRes.data);
-          // If slug param or query param is provided
-          const targetSlug = slug || searchParams.get('center');
-          if (targetSlug) {
-            const matched = centerRes.data.find(
-              (c) => c.slug === targetSlug.toLowerCase() || c.centerCode === targetSlug.toUpperCase()
-            );
-            if (matched) {
-              setSelectedCenter(matched);
-              setStep(2); // Jump to photo upload directly
+        const centerList = (centerRes.success && centerRes.data) ? centerRes.data : [];
+        setCenters(centerList);
+
+        const targetIdentifier = slug || token || searchParams.get('center') || searchParams.get('token');
+
+        let activeCenter = null;
+        if (targetIdentifier && centerList.length > 0) {
+          activeCenter = centerList.find(
+            (c) =>
+              (c.slug && c.slug.toLowerCase() === targetIdentifier.toLowerCase()) ||
+              (c.centerCode && c.centerCode.toUpperCase() === targetIdentifier.toUpperCase()) ||
+              (c.qrToken && c.qrToken === targetIdentifier) ||
+              (c._id && c._id.toString() === targetIdentifier)
+          );
+        }
+
+        // Direct fetch fallback if target was provided but not found in first page list
+        if (!activeCenter && targetIdentifier) {
+          try {
+            const singleCenterRes = await customerService.getCenter(targetIdentifier);
+            const foundCenter = singleCenterRes.data?.data || singleCenterRes.data;
+            if (foundCenter) {
+              activeCenter = foundCenter;
+              setCenters((prev) => (prev.some((p) => p._id === foundCenter._id) ? prev : [foundCenter, ...prev]));
             }
-          } else if (centerRes.data.length === 1) {
-            setSelectedCenter(centerRes.data[0]);
+          } catch (lookupErr) {
+            // direct lookup fallback failed
           }
+        }
+
+        if (activeCenter) {
+          setSelectedCenter(activeCenter);
+          setStep(2); // Jump to photo upload directly
+        } else if (centerList.length === 1) {
+          setSelectedCenter(centerList[0]);
         }
       } catch (err) {
         error('Failed to load studio details: ' + (err.formattedMessage || err.message));
@@ -93,7 +113,7 @@ const CustomerOrderPage = () => {
     };
 
     loadInitialData();
-  }, [slug, searchParams]);
+  }, [slug, token, searchParams]);
 
   // Handle Photo File Selection
   const handlePhotoSelect = async (e) => {

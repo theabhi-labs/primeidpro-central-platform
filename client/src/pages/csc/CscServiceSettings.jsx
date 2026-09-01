@@ -35,21 +35,56 @@ export default function CscServiceSettings() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/centers/me');
-      if (res.data?.data) {
-        const c = res.data.data;
-        setCenter(c);
-        if (c.serviceSettings) {
-          setSettings({
-            pricePerPhoto: c.serviceSettings.pricePerPhoto ?? 7,
-            minimumQuantity: c.serviceSettings.minimumQuantity ?? 3,
-            maximumQuantity: c.serviceSettings.maximumQuantity ?? 20,
-            quantityStep: c.serviceSettings.quantityStep ?? 1,
-            onlinePaymentEnabled: c.serviceSettings.onlinePaymentEnabled ?? true,
-            cashPaymentEnabled: c.serviceSettings.cashPaymentEnabled ?? true,
-            serviceEnabled: c.serviceSettings.serviceEnabled ?? true
-          });
+      setMsg({ text: '', type: '' });
+
+      let serviceData = null;
+      let centerData = null;
+
+      try {
+        const res = await api.get('/centers/service-settings');
+        if (res.data?.data) {
+          serviceData = res.data.data.serviceSettings || res.data.data;
+          centerData = res.data.data.center || (res.data.data.qrToken ? res.data.data : null);
         }
+      } catch (e) {
+        // Fallback to /centers/me
+      }
+
+      if (!centerData) {
+        try {
+          const res = await api.get('/centers/me');
+          if (res.data?.data) {
+            centerData = res.data.data;
+            if (!serviceData && res.data.data.serviceSettings) {
+              serviceData = res.data.data.serviceSettings;
+            }
+          }
+        } catch (e) {
+          // Fallback to /auth/me
+          const authRes = await api.get('/auth/me');
+          if (authRes.data?.data?.center) {
+            centerData = authRes.data.data.center;
+            if (!serviceData && authRes.data.data.center.serviceSettings) {
+              serviceData = authRes.data.data.center.serviceSettings;
+            }
+          }
+        }
+      }
+
+      if (centerData) {
+        setCenter(centerData);
+      }
+
+      if (serviceData) {
+        setSettings({
+          pricePerPhoto: serviceData.pricePerPhoto ?? 7,
+          minimumQuantity: serviceData.minimumQuantity ?? 3,
+          maximumQuantity: serviceData.maximumQuantity ?? 20,
+          quantityStep: serviceData.quantityStep ?? 1,
+          onlinePaymentEnabled: serviceData.onlinePaymentEnabled ?? true,
+          cashPaymentEnabled: serviceData.cashPaymentEnabled ?? true,
+          serviceEnabled: serviceData.serviceEnabled ?? true
+        });
       }
     } catch (err) {
       setMsg({ text: 'Failed to load service settings', type: 'error' });
@@ -66,7 +101,9 @@ export default function CscServiceSettings() {
       const res = await api.put('/centers/service-settings', settings);
       setMsg({ text: 'Service configuration updated successfully!', type: 'success' });
       if (res.data?.data) {
-        setCenter(res.data.data);
+        const updated = res.data.data;
+        if (updated.center) setCenter(updated.center);
+        else if (updated.qrToken) setCenter(updated);
       }
     } catch (err) {
       setMsg({ text: err.response?.data?.message || 'Failed to save settings', type: 'error' });
@@ -77,7 +114,9 @@ export default function CscServiceSettings() {
 
   const publicUrl = center?.qrToken
     ? `${window.location.origin}/order/${center.qrToken}`
-    : `${window.location.origin}/order/${center?._id}`;
+    : (center?.slug
+        ? `${window.location.origin}/kiosk/${center.slug}`
+        : (center?._id ? `${window.location.origin}/order/${center._id}` : `${window.location.origin}/order`));
 
   const copyLink = () => {
     navigator.clipboard.writeText(publicUrl);

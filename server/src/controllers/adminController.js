@@ -46,7 +46,7 @@ class AdminController {
         Center.countDocuments({ status: 'ACTIVE' }),
         Center.countDocuments({ status: { $in: ['SUSPENDED', 'BLOCKED'] } }),
         Device.countDocuments(),
-        Device.countDocuments({ status: 'ACTIVE', lastSeenAt: { $gte: new Date(Date.now() - 30000) } }),
+        Device.countDocuments({ status: 'ACTIVE', lastSeenAt: { $gte: new Date(Date.now() - 180000) } }),
         Order.countDocuments({ createdAt: { $gte: startOfDay } }),
         Order.aggregate([
           { $match: { paymentStatus: 'PAID', createdAt: { $gte: startOfDay } } },
@@ -245,7 +245,7 @@ class AdminController {
 
       const enriched = devices.map((d) => ({
         ...d,
-        isOnline: d.status === 'ACTIVE' && d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() < 30000
+        isOnline: d.status === 'ACTIVE' && d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() < 180000
       }));
 
       return ApiResponse.success(res, enriched, 'Devices list');

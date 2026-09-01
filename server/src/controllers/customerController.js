@@ -162,6 +162,7 @@ const getCenterBySlugOrCode = async (req, res, next) => {
     const { identifier } = req.params;
     const center = await StudioCenter.findOne({
       $or: [
+        { qrToken: identifier },
         { slug: identifier.toLowerCase() },
         { centerCode: identifier.toUpperCase() },
         { _id: identifier.match(/^[0-9a-fA-F]{24}$/) ? identifier : null }

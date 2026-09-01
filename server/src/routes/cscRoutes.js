@@ -9,6 +9,8 @@ router.use(authMiddleware);
 router.use(roleMiddleware(['CSC', 'CSC_OPERATOR', 'ADMIN', 'SUPER_ADMIN']));
 
 // Compatibility routes
+router.get('/me', centerController.getCenterProfile);
+router.get('/profile', centerController.getCenterProfile);
 router.get('/dashboard-stats', centerController.getDashboard);
 router.get('/dashboard', centerController.getDashboard);
 router.get('/jobs', centerController.getOrders);

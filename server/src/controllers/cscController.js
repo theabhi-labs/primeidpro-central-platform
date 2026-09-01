@@ -206,7 +206,7 @@ const getKioskQr = async (req, res, next) => {
     const center = await _getCenterForUser(req.user._id);
     if (!center) return ApiResponse.error(res, 'Studio Center not found', 404);
 
-    const kioskUrl = `${env.DOMAIN}/kiosk/${center.slug}`;
+    const kioskUrl = `${env.CLIENT_URL || env.DOMAIN || 'https://primeidpro.online'}/kiosk/${center.slug}`;
     const qrDataUrl = await QRCode.toDataURL(kioskUrl, {
       width: 400,
       margin: 2,

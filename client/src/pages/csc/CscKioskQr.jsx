@@ -69,7 +69,7 @@ const CscKioskQr = () => {
 
       {/* Printable Poster Card */}
       {qrData ? (
-        <div className="p-8 sm:p-12 rounded-3xl bg-white text-slate-900 border border-slate-200 text-center shadow-2xl space-y-6 max-w-md mx-auto print:shadow-none print:border-none">
+        <div className="printable-poster p-8 sm:p-12 rounded-3xl bg-white text-slate-900 border border-slate-200 text-center shadow-2xl space-y-6 max-w-md mx-auto print:shadow-none print:border-none">
           {/* Header */}
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-2">
