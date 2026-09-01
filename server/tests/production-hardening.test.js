@@ -28,7 +28,8 @@ let testServerPort;
 let testBaseUrl;
 
 async function setup() {
-  mongoServer = await MongoMemoryServer.create();
+  const memOpts = process.platform === 'linux' ? { binary: { version: '7.0.14' } } : {};
+  mongoServer = await MongoMemoryServer.create(memOpts);
   const uri = mongoServer.getUri();
   await mongoose.connect(uri);
 

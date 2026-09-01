@@ -1,12 +1,13 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
-const nodeEnv = process.env.NODE_ENV || 'development';
-const isProduction = nodeEnv === 'production';
+const isCloudEnv = Boolean(process.env.RENDER || process.env.VERCEL || process.env.RAILWAY_ENVIRONMENT || process.env.FLY_APP_NAME);
+const nodeEnv = process.env.NODE_ENV || (isCloudEnv ? 'production' : 'development');
+const isProduction = nodeEnv === 'production' || isCloudEnv;
 const isTest = nodeEnv === 'test';
 
-// In production, in-memory DB fallback is strictly disabled to prevent volatile data loss.
-// In development, it is allowed ONLY if explicitly set to 'true'.
+// In production / cloud environments, in-memory DB fallback is strictly disabled to prevent volatile data loss.
+// In local development, it is allowed ONLY if explicitly set to 'true'.
 // In test mode, memory DB can be used if enabled or configured for isolation.
 const useMemoryFallback = !isProduction && (process.env.USE_MEMORY_DB_FALLBACK === 'true' || isTest);
 
@@ -55,6 +56,7 @@ const paymentTestMode = isProduction
 module.exports = {
   NODE_ENV: nodeEnv,
   IS_PRODUCTION: isProduction,
+  IS_CLOUD: isCloudEnv,
   IS_TEST: isTest,
   PORT: parseInt(process.env.PORT || '5000', 10),
   CLIENT_URL: process.env.CLIENT_URL || (isProduction ? 'https://primeidpro.online' : 'http://localhost:5173'),

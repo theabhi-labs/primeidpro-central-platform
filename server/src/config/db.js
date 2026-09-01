@@ -20,12 +20,13 @@ const connectDB = async () => {
   } catch (error) {
     console.warn(`[Database] External MongoDB connection failed (${error.message}).`);
 
-    // Strictly enforce no in-memory database fallback in production
-    if (env.USE_MEMORY_DB_FALLBACK && env.NODE_ENV !== 'production') {
+    // Strictly enforce no in-memory database fallback in production or cloud deployment
+    if (env.USE_MEMORY_DB_FALLBACK && !env.IS_PRODUCTION && !env.IS_CLOUD) {
       try {
         console.log('[Database] Starting embedded in-memory MongoDB engine for zero-dependency local execution...');
         const { MongoMemoryServer } = require('mongodb-memory-server');
-        mongod = await MongoMemoryServer.create();
+        const memOpts = process.platform === 'linux' ? { binary: { version: '7.0.14' } } : {};
+        mongod = await MongoMemoryServer.create(memOpts);
         const uri = mongod.getUri();
 
         await mongoose.connect(uri);
@@ -35,7 +36,13 @@ const connectDB = async () => {
         throw memErr;
       }
     } else {
-      console.error('[Database] MongoDB connection failed and memory fallback is disabled for safety.');
+      if (env.IS_CLOUD || env.IS_PRODUCTION) {
+        console.error('[Database] FATAL: Production / Cloud deployment cannot connect to MongoDB.');
+        console.error('[Database] Please ensure MONGODB_URI is correctly configured in your Render / Cloud provider Environment Variables.');
+        console.error('[Database] Example: MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/primeidpro?retryWrites=true&w=majority');
+      } else {
+        console.error('[Database] MongoDB connection failed and memory fallback is disabled for safety.');
+      }
       throw error;
     }
   }
