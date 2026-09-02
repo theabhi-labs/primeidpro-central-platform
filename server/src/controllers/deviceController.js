@@ -287,7 +287,38 @@ class DeviceController {
             }
           }
 
-          const photoFinalUrl = primaryPhotoUrl || job.temporaryPhotoUrl || job.photoUrl;
+          let photoFinalUrl = primaryPhotoUrl || job.temporaryPhotoUrl || job.photoUrl;
+          if (photoFinalUrl && !photoFinalUrl.startsWith('http')) {
+            const domain = env.DOMAIN || 'https://primeidpro-central-platform.onrender.com';
+            photoFinalUrl = `${domain}${photoFinalUrl.startsWith('/') ? '' : '/'}${photoFinalUrl}`;
+          }
+
+          let itemsToUse = itemsWithSignedUrls.map((it) => {
+            let itemUrl = it.downloadUrl || it.photoUrl || photoFinalUrl;
+            if (itemUrl && !itemUrl.startsWith('http')) {
+              const domain = env.DOMAIN || 'https://primeidpro-central-platform.onrender.com';
+              itemUrl = `${domain}${itemUrl.startsWith('/') ? '' : '/'}${itemUrl}`;
+            }
+            return {
+              ...it,
+              photoUrl: itemUrl,
+              downloadUrl: itemUrl,
+              imageUrl: itemUrl
+            };
+          });
+
+          if (itemsToUse.length === 0) {
+            itemsToUse = [
+              {
+                photoIndex: 1,
+                photoUrl: photoFinalUrl,
+                downloadUrl: photoFinalUrl,
+                imageUrl: photoFinalUrl,
+                storageKey: primaryKey || '',
+                originalFileName: 'customer_photo.jpg'
+              }
+            ];
+          }
 
           return {
             ...job,
@@ -297,7 +328,7 @@ class DeviceController {
             photoUrl: photoFinalUrl,
             downloadUrl: photoFinalUrl,
             imageUrl: photoFinalUrl,
-            items: itemsWithSignedUrls
+            items: itemsToUse
           };
         })
       );
