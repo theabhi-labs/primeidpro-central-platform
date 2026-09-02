@@ -225,12 +225,19 @@ class DeviceController {
         return ApiResponse.error(res, 'This device authorization is revoked or suspended', 403);
       }
 
-      // Fetch QUEUED, SENT_TO_APP, DISPATCHED, or CONFIRMED jobs for this center
+      // Fetch ANY job for this center that is paid or queued and not completed
       const jobs = await Job.find({
-        centerId: device.centerId,
         $or: [
-          { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED'] } },
-          { jobStatus: 'CONFIRMED', paymentStatus: 'PAID' }
+          { centerId: device.centerId },
+          { centerId: device.centerId.toString() }
+        ],
+        $and: [
+          {
+            $or: [
+              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED'] } },
+              { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
+            ]
+          }
         ]
       })
         .sort({ createdAt: 1 })
@@ -267,7 +274,7 @@ class DeviceController {
           );
 
           // Generate signed URL for primary photo
-          let primaryPhotoUrl = job.temporaryPhotoUrl;
+          let primaryPhotoUrl = job.temporaryPhotoUrl || job.photoUrl;
           const primaryKey = job.temporaryStorageKey || job.storageKey || itemsWithSignedUrls[0]?.storageKey;
           if (primaryKey && !job.isPhotoPurged) {
             try {
@@ -280,9 +287,16 @@ class DeviceController {
             }
           }
 
+          const photoFinalUrl = primaryPhotoUrl || job.temporaryPhotoUrl || job.photoUrl;
+
           return {
             ...job,
-            temporaryPhotoUrl: primaryPhotoUrl || job.temporaryPhotoUrl,
+            id: job._id.toString(),
+            jobId: job._id.toString(),
+            temporaryPhotoUrl: photoFinalUrl,
+            photoUrl: photoFinalUrl,
+            downloadUrl: photoFinalUrl,
+            imageUrl: photoFinalUrl,
             items: itemsWithSignedUrls
           };
         })
@@ -366,8 +380,11 @@ class DeviceController {
 
       const isObjectId = jobId && /^[0-9a-fA-F]{24}$/.test(jobId);
       const query = {
-        centerId: device.centerId,
-        jobStatus: { $in: ['QUEUED', 'SENT_TO_APP'] }
+        $or: [
+          { centerId: device.centerId },
+          { centerId: device.centerId.toString() }
+        ],
+        jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'CREATED', 'ACKNOWLEDGED'] }
       };
 
       if (isObjectId) {
