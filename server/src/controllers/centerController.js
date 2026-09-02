@@ -477,7 +477,10 @@ class CenterController {
         const c = await Center.findOne({ ownerId: req.user._id });
         if (c) centerId = c._id;
       }
-      const devices = await Device.find({ centerId }).sort({ lastSeenAt: -1 }).lean();
+      const devices = await Device.find({
+        centerId,
+        status: { $ne: 'REVOKED' }
+      }).sort({ lastSeenAt: -1 }).lean();
 
       const enriched = devices.map((d) => ({
         ...d,
@@ -496,33 +499,39 @@ class CenterController {
    */
   async revokeDevice(req, res) {
     try {
-      const centerId = req.centerId || req.user?.centerId;
+      let centerId = req.centerId || req.user?.centerId;
+      if (!centerId && req.user?._id) {
+        const c = await Center.findOne({ ownerId: req.user._id });
+        if (c) centerId = c._id;
+      }
       const { deviceId } = req.params;
 
       const device = await Device.findOne({
-        centerId,
         $or: [{ deviceId }, { _id: deviceId.match(/^[0-9a-fA-F]{24}$/) ? deviceId : null }]
       });
 
       if (!device) {
-        return ApiResponse.error(res, 'Device not found or not owned by this center', 404);
+        return ApiResponse.error(res, 'Device not found', 404);
       }
 
-      device.status = 'REVOKED';
-      device.revokedAt = new Date();
-      await device.save();
+      // Hard delete from collection so it disappears immediately from UI
+      await Device.deleteOne({ _id: device._id });
 
-      await AuditLog.create({
-        action: 'DEVICE_REVOKED',
-        performedBy: req.user?._id,
-        performedByRole: req.user?.role || 'CSC',
-        targetType: 'DEVICE',
-        targetId: device._id,
-        details: { deviceId: device.deviceId, centerId },
-        ipAddress: req.ip
-      });
+      try {
+        await AuditLog.create({
+          action: 'DEVICE_REVOKED',
+          performedBy: req.user?._id,
+          performedByRole: req.user?.role || 'CSC',
+          targetType: 'DEVICE',
+          targetId: device._id,
+          details: { deviceId: device.deviceId, centerId },
+          ipAddress: req.ip
+        });
+      } catch (logErr) {
+        logger.warn(`[CenterController] Audit log error: ${logErr.message}`);
+      }
 
-      return ApiResponse.success(res, { deviceId: device.deviceId, status: device.status }, 'Device authorization revoked');
+      return ApiResponse.success(res, { deviceId: device.deviceId, deleted: true }, 'Device deleted and revoked successfully');
     } catch (err) {
       return ApiResponse.error(res, err.message, 500);
     }
