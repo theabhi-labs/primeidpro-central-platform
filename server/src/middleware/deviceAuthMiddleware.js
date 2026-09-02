@@ -34,21 +34,21 @@ const authenticateDevice = async (req, res, next) => {
       return ApiResponse.error(res, 'Device identifier mismatch between header and token', 401);
     }
 
-    const device = await Device.findOne({ deviceId: targetDeviceId });
+    let device = await Device.findOne({ deviceId: targetDeviceId });
+    if (!device && installationId) {
+      device = await Device.findOne({ installationId, status: 'ACTIVE' });
+    }
     if (!device) {
       return ApiResponse.error(res, 'Device not registered or binding removed', 401);
     }
 
-    // Verify installation identity
-    if (installationId && device.installationId && device.installationId !== installationId) {
-      return ApiResponse.error(res, 'Device installation identity mismatch', 401);
-    }
-    if (decoded.installationId && device.installationId && device.installationId !== decoded.installationId) {
-      return ApiResponse.error(res, 'Device installation identity mismatch in token', 401);
+    // Gracefully sync installation identity if client updated or reinstalled
+    if (installationId && device.installationId !== installationId) {
+      device.installationId = installationId;
     }
 
     // Verify center binding
-    if (decoded.centerId && device.centerId.toString() !== decoded.centerId.toString()) {
+    if (decoded.centerId && device.centerId && device.centerId.toString() !== decoded.centerId.toString()) {
       return ApiResponse.error(res, 'Device center binding mismatch', 401);
     }
 
