@@ -99,10 +99,18 @@ class JobEngineService {
    */
   async getPendingJobsForCenter(centerId, limit = 10) {
     return Job.find({
-      centerId,
-      jobStatus: {
-        $in: [JOB_STATUS.DISPATCHED, JOB_STATUS.DOWNLOADING, JOB_STATUS.PROCESSING, JOB_STATUS.READY, JOB_STATUS.PRINTING]
-      }
+      $or: [
+        { centerId },
+        { centerId: centerId ? centerId.toString() : null }
+      ],
+      $and: [
+        {
+          $or: [
+            { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED'] } },
+            { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
+          ]
+        }
+      ]
     })
       .sort({ createdAt: 1 })
       .limit(limit)

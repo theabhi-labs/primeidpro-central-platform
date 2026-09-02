@@ -30,8 +30,18 @@ const heartbeat = async (req, res, next) => {
     await device.save();
 
     const pendingCount = await Job.countDocuments({
-      centerId: req.centerId,
-      jobStatus: { $in: [JOB_STATUS.DISPATCHED, JOB_STATUS.DOWNLOADING, JOB_STATUS.PROCESSING, JOB_STATUS.READY, JOB_STATUS.PRINTING] }
+      $or: [
+        { centerId: req.centerId },
+        { centerId: req.centerId ? req.centerId.toString() : null }
+      ],
+      $and: [
+        {
+          $or: [
+            { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED'] } },
+            { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
+          ]
+        }
+      ]
     });
 
     const center = await StudioCenter.findById(req.centerId).select('walletBalance centerName centerCode');
@@ -54,23 +64,30 @@ const getPendingJobs = async (req, res, next) => {
   try {
     const jobs = await jobEngineService.getPendingJobsForCenter(req.centerId);
 
-    const formattedJobs = jobs.map((job) => ({
-      id: job._id,
-      jobCode: job.jobCode,
-      customerName: job.customerName,
-      customerPhone: job.customerPhone,
-      serviceType: job.serviceType,
-      serviceName: job.serviceName,
-      paperSize: job.paperSize,
-      copies: job.copies,
-      priceInr: job.priceInr,
-      creditCost: job.creditCost,
-      jobStatus: job.jobStatus,
-      temporaryPhotoUrl: job.temporaryPhotoUrl,
-      cropSettings: job.cropSettings,
-      backgroundColor: job.backgroundColor,
-      createdAt: job.createdAt
-    }));
+    const formattedJobs = jobs.map((job) => {
+      const photoUrl = job.temporaryPhotoUrl || job.photoUrl || '';
+      return {
+        id: job._id.toString(),
+        jobId: job._id.toString(),
+        jobCode: job.jobCode,
+        customerName: job.customerName,
+        customerPhone: job.customerPhone,
+        serviceType: job.serviceType,
+        serviceName: job.serviceName,
+        paperSize: job.paperSize,
+        copies: job.copies,
+        priceInr: job.priceInr,
+        creditCost: job.creditCost,
+        jobStatus: job.jobStatus,
+        temporaryPhotoUrl: photoUrl,
+        photoUrl: photoUrl,
+        downloadUrl: photoUrl,
+        imageUrl: photoUrl,
+        cropSettings: job.cropSettings,
+        backgroundColor: job.backgroundColor,
+        createdAt: job.createdAt
+      };
+    });
 
     return ApiResponse.success(res, formattedJobs, 'Pending print jobs');
   } catch (err) {

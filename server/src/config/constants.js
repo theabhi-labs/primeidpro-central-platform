@@ -17,6 +17,8 @@ module.exports = {
   },
   JOB_STATUS: {
     CREATED: 'CREATED',
+    QUEUED: 'QUEUED',
+    SENT_TO_APP: 'SENT_TO_APP',
     PAID: 'PAID',
     DISPATCHED: 'DISPATCHED',
     DOWNLOADING: 'DOWNLOADING',
