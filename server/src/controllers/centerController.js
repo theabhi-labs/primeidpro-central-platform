@@ -472,7 +472,11 @@ class CenterController {
    */
   async getDevices(req, res) {
     try {
-      const centerId = req.centerId || req.user?.centerId;
+      let centerId = req.centerId || req.user?.centerId;
+      if (!centerId && req.user?._id) {
+        const c = await Center.findOne({ ownerId: req.user._id });
+        if (c) centerId = c._id;
+      }
       const devices = await Device.find({ centerId }).sort({ lastSeenAt: -1 }).lean();
 
       const enriched = devices.map((d) => ({
