@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
@@ -9,117 +9,113 @@ import {
   Store,
   CreditCard,
   Banknote,
-  Layers,
-  Crop,
   ShieldCheck,
-  ChevronRight,
-  ArrowLeft,
-  Search,
   MapPin,
-  Clock
+  Clock,
+  Plus,
+  Minus,
+  ArrowRight,
+  Smartphone,
+  RefreshCw,
+  Image as ImageIcon
 } from 'lucide-react';
 import { customerService, paymentService } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import Button from '../../components/Button';
-import PhotoCropperModal from '../../components/PhotoCropperModal';
 
-const CustomerOrderPage = () => {
+export default function CustomerOrderPage() {
   const { slug, token } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { success, error, info } = useToast();
+  const fileInputRef = useRef(null);
 
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
-  // Data States
-  const [centers, setCenters] = useState([]);
+  // Center & Settings
   const [selectedCenter, setSelectedCenter] = useState(null);
-  const [centerSearch, setCenterSearch] = useState('');
-  const [templates, setTemplates] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [copies, setCopies] = useState(8);
+  const [centers, setCenters] = useState([]);
+  const [serviceSettings, setServiceSettings] = useState({
+    pricePerPhoto: 6,
+    minimumQuantity: 4,
+    maximumQuantity: 32,
+    onlinePaymentEnabled: true,
+    cashPaymentEnabled: true,
+  });
 
-  // Payment method selection ('RAZORPAY' | 'CASH')
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('RAZORPAY');
-
-  // Photo & Crop States
+  // Customer Inputs
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploadedStorageKey, setUploadedStorageKey] = useState(null);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
-  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
-  const [cropSettings, setCropSettings] = useState({ zoom: 1, rotation: 0, aspectRatio: 35 / 45 });
-  const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  // Customer Form
+  const [copies, setCopies] = useState(8);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('ONLINE'); // 'ONLINE' | 'CASH'
 
-  // Completed Order State
+  // Completed State
   const [completedOrder, setCompletedOrder] = useState(null);
 
-  // Load Templates & Centers
+  // 1. Load Studio Details & Pricing
   useEffect(() => {
-    const loadInitialData = async () => {
+    const loadStudioData = async () => {
       try {
-        const [tplRes, centerRes] = await Promise.all([
-          customerService.getTemplates(),
-          customerService.listCenters()
-        ]);
-
-        if (tplRes.success && tplRes.data) {
-          setTemplates(tplRes.data);
-          setSelectedTemplate(tplRes.data[0]);
-          setCopies(tplRes.data[0].defaultCopies || 8);
-        }
-
+        setInitialLoading(true);
+        const centerRes = await customerService.listCenters();
         const centerList = (centerRes.success && centerRes.data) ? centerRes.data : [];
         setCenters(centerList);
 
-        const targetIdentifier = slug || token || searchParams.get('center') || searchParams.get('token');
-
+        const targetId = slug || token || searchParams.get('center') || searchParams.get('token');
         let activeCenter = null;
-        if (targetIdentifier && centerList.length > 0) {
+
+        if (targetId && centerList.length > 0) {
           activeCenter = centerList.find(
             (c) =>
-              (c.slug && c.slug.toLowerCase() === targetIdentifier.toLowerCase()) ||
-              (c.centerCode && c.centerCode.toUpperCase() === targetIdentifier.toUpperCase()) ||
-              (c.qrToken && c.qrToken === targetIdentifier) ||
-              (c._id && c._id.toString() === targetIdentifier)
+              (c.slug && c.slug.toLowerCase() === targetId.toLowerCase()) ||
+              (c.centerCode && c.centerCode.toUpperCase() === targetId.toUpperCase()) ||
+              (c.qrToken && c.qrToken === targetId) ||
+              (c._id && c._id.toString() === targetId)
           );
         }
 
-        // Direct fetch fallback if target was provided but not found in first page list
-        if (!activeCenter && targetIdentifier) {
+        if (!activeCenter && targetId) {
           try {
-            const singleCenterRes = await customerService.getCenter(targetIdentifier);
-            const foundCenter = singleCenterRes.data?.data || singleCenterRes.data;
-            if (foundCenter) {
-              activeCenter = foundCenter;
-              setCenters((prev) => (prev.some((p) => p._id === foundCenter._id) ? prev : [foundCenter, ...prev]));
-            }
-          } catch (lookupErr) {
-            // direct lookup fallback failed
+            const singleRes = await customerService.getCenter(targetId);
+            activeCenter = singleRes.data?.data || singleRes.data;
+          } catch (e) {
+            // direct fetch fallback failed
           }
+        }
+
+        if (!activeCenter && centerList.length > 0) {
+          activeCenter = centerList[0];
         }
 
         if (activeCenter) {
           setSelectedCenter(activeCenter);
-          setStep(2); // Jump to photo upload directly
-        } else if (centerList.length === 1) {
-          setSelectedCenter(centerList[0]);
+          if (activeCenter.serviceSettings) {
+            setServiceSettings((prev) => ({
+              ...prev,
+              ...activeCenter.serviceSettings,
+            }));
+            const defMin = activeCenter.serviceSettings.minimumQuantity || 4;
+            setCopies(Math.max(defMin, 8));
+          }
         }
       } catch (err) {
         error('Failed to load studio details: ' + (err.formattedMessage || err.message));
+      } finally {
+        setInitialLoading(false);
       }
     };
 
-    loadInitialData();
+    loadStudioData();
   }, [slug, token, searchParams]);
 
-  // Handle Photo File Selection
+  // Handle Photo Upload
   const handlePhotoSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -128,8 +124,7 @@ const CustomerOrderPage = () => {
     const objectUrl = URL.createObjectURL(file);
     setPhotoPreview(objectUrl);
 
-    // Automatically upload to temporary object storage
-    setLoading(true);
+    setIsUploadingPhoto(true);
     try {
       const formData = new FormData();
       formData.append('photo', file);
@@ -138,127 +133,145 @@ const CustomerOrderPage = () => {
       if (res.success && res.data) {
         setUploadedStorageKey(res.data.storageKey);
         setUploadedPhotoUrl(res.data.photoUrl);
-        success('Photo uploaded to temporary processing storage');
-        setIsCropModalOpen(true);
+        success('Photo uploaded! Choose copies and tap print.');
       }
     } catch (err) {
       error('Upload failed: ' + (err.formattedMessage || err.message));
     } finally {
-      setLoading(false);
+      setIsUploadingPhoto(false);
     }
   };
 
-  // Handle Razorpay Checkout
-  const handleProceedToPayment = async (e) => {
+  // Quantity presets
+  const minCopies = serviceSettings.minimumQuantity || 4;
+  const maxCopies = serviceSettings.maximumQuantity || 32;
+  const pricePerUnit = serviceSettings.pricePerPhoto || 6;
+  const totalPrice = copies * pricePerUnit;
+
+  const quickPresets = [4, 8, 16, 24, 32].filter(
+    (q) => q >= minCopies && q <= maxCopies
+  );
+
+  // Submit Order directly to Studio Counter
+  const handleSubmitOrder = async (e) => {
     e.preventDefault();
 
     if (!selectedCenter) {
-      error('Please select a studio center');
-      setStep(1);
+      error('Studio Center not identified. Please re-scan QR code.');
       return;
     }
-    if (!uploadedStorageKey) {
-      error('Please upload your photo');
-      setStep(2);
+    if (!uploadedStorageKey && !uploadedPhotoUrl) {
+      error('Please select or take a photo first.');
+      if (fileInputRef.current) fileInputRef.current.click();
       return;
     }
-    if (!customerName || !customerPhone) {
-      error('Please enter your name and contact phone number');
+    if (!customerPhone || customerPhone.length < 10) {
+      error('Please enter a valid 10-digit mobile number for order delivery.');
       return;
     }
 
     setLoading(true);
-
     try {
-      // 1. Create order on server
       const orderPayload = {
         centerId: selectedCenter._id,
-        customerName,
-        customerPhone,
-        customerEmail,
-        serviceType: selectedTemplate.serviceType,
-        copies,
+        customerName: customerName.trim() || 'Walk-in Customer',
+        customerPhone: customerPhone.trim(),
+        customerEmail: `${customerPhone.trim()}@primeidpro.customer`,
+        serviceType: 'PASSPORT_4X6',
+        copies: Number(copies),
         storageKey: uploadedStorageKey,
         photoUrl: uploadedPhotoUrl,
-        cropSettings,
-        backgroundColor,
-        paymentMethod: selectedPaymentMethod
+        paymentMethod: paymentMethod === 'CASH' ? 'CASH' : 'RAZORPAY',
       };
 
       const orderRes = await customerService.createOrder(orderPayload);
       if (!orderRes.success || !orderRes.data) {
-        throw new Error(orderRes.message || 'Could not create order');
+        throw new Error(orderRes.message || 'Could not place order');
       }
 
       const order = orderRes.data.order || orderRes.data.job || {};
       const job = orderRes.data.job || orderRes.data.order || {};
       const razorpayOrder = orderRes.data.razorpayOrder;
-      const orderJobId = job.id || job.jobId || order.id;
+      const orderJobId = job.id || job.jobId || order.id || order._id;
 
-      // Handle Cash at Counter Order
-      if (selectedPaymentMethod === 'CASH' || !razorpayOrder) {
+      // Handle Cash at Counter
+      if (paymentMethod === 'CASH' || !razorpayOrder) {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        setCompletedOrder({ ...order, ...job, paymentMethod: 'CASH', paymentStatus: 'CASH_PENDING' });
-        setStep(5); // Success step
-        success('Order submitted! Please pay cash at the counter.');
+        setCompletedOrder({
+          ...order,
+          ...job,
+          orderId: orderJobId,
+          copies,
+          totalPrice,
+          paymentMethod: 'CASH',
+        });
+        success('🎉 Order sent directly to Studio Counter!');
         return;
       }
 
-      // 2. Open Razorpay Checkout or simulate test mode
+      // Handle Razorpay / UPI Online Checkout
       if (razorpayOrder) {
         const options = {
           key: razorpayOrder.keyId || 'rzp_test_PrimeIdProSandbox2026',
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency || 'INR',
-          name: 'PRIME ID PRO',
-          description: `${order.serviceName || job.serviceName || 'Passport Photo'} (${copies} prints)`,
+          name: selectedCenter.centerName || 'PRIME ID PRO',
+          description: `Passport Photo Print (${copies} Copies)`,
           order_id: razorpayOrder.orderId,
           handler: async (response) => {
             try {
-              // 3. Verify Payment
               const verifyRes = await paymentService.verifyJobPayment({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                jobId: orderJobId
+                jobId: orderJobId,
               });
 
-              if (verifyRes.success) {
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                setCompletedOrder({ ...order, ...job, ...verifyRes.data });
-                setStep(5); // Success step
-                success('Payment successful! Job dispatched to studio desktop.');
-              }
+              confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+              setCompletedOrder({
+                ...order,
+                ...job,
+                ...verifyRes.data,
+                orderId: orderJobId,
+                copies,
+                totalPrice,
+                paymentMethod: 'ONLINE',
+              });
+              success('🎉 Payment verified! Photo sent to studio desktop.');
             } catch (verErr) {
-              error('Payment verification failed: ' + (verErr.formattedMessage || verErr.message));
+              error('Payment verification: ' + (verErr.formattedMessage || verErr.message));
             }
           },
           prefill: {
             name: customerName,
             contact: customerPhone,
-            email: customerEmail
           },
           theme: {
-            color: '#4F46E5'
-          }
+            color: '#06b6d4',
+          },
         };
 
-        // If Razorpay SDK loaded on window
         if (window.Razorpay) {
           const rzp = new window.Razorpay(options);
           rzp.open();
         } else {
-          // Simulation fallback for sandbox / offline dev
-          info('Razorpay SDK simulation mode: Auto-capturing test payment...');
+          // Dev sandbox simulation
           const verifyRes = await paymentService.verifyJobPayment({
             razorpay_order_id: razorpayOrder.orderId,
             razorpay_payment_id: `pay_sim_${Date.now()}`,
             razorpay_signature: 'simulated_success_signature',
-            jobId: orderJobId
+            jobId: orderJobId,
           });
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          setCompletedOrder({ ...order, ...job, ...verifyRes.data });
-          setStep(5);
+          setCompletedOrder({
+            ...order,
+            ...job,
+            ...verifyRes.data,
+            orderId: orderJobId,
+            copies,
+            totalPrice,
+            paymentMethod: 'ONLINE',
+          });
         }
       }
     } catch (err) {
@@ -268,543 +281,363 @@ const CustomerOrderPage = () => {
     }
   };
 
-  const filteredCenters = centers.filter(
-    (c) =>
-      c.centerName.toLowerCase().includes(centerSearch.toLowerCase()) ||
-      c.city.toLowerCase().includes(centerSearch.toLowerCase()) ||
-      c.pincode.includes(centerSearch) ||
-      c.centerCode.toLowerCase().includes(centerSearch.toLowerCase())
-  );
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin mb-3" />
+        <p className="text-sm font-semibold text-slate-300">Connecting to Studio Counter...</p>
+      </div>
+    );
+  }
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 min-h-screen">
-      {/* Wizard Progress Bar */}
-      {step < 5 && (
-        <div className="mb-8">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-2">
-            <span className={step >= 1 ? 'text-indigo-400 font-bold' : ''}>1. Studio Center</span>
-            <span className={step >= 2 ? 'text-indigo-400 font-bold' : ''}>2. Photo &amp; Crop</span>
-            <span className={step >= 3 ? 'text-indigo-400 font-bold' : ''}>3. Size &amp; Template</span>
-            <span className={step >= 4 ? 'text-indigo-400 font-bold' : ''}>4. Payment</span>
-          </div>
-          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-cyber-cyan transition-all duration-300"
-              style={{ width: `${(step / 4) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
+  // ==========================================
+  // SUCCESS SCREEN
+  // ==========================================
+  if (completedOrder) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 relative overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl" />
 
-      {/* Step 1: Select Studio Center */}
-      {step === 1 && (
-        <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-extrabold text-white">Select Your Nearest Studio</h2>
-            <p className="text-xs text-slate-400">
-              Your prints will be processed and natively printed on this studio's physical hardware.
-            </p>
-          </div>
-
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by studio name, city, pincode, or center code..."
-              value={centerSearch}
-              onChange={(e) => setCenterSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          {/* Studio List */}
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-            {filteredCenters.map((center) => (
-              <div
-                key={center._id}
-                onClick={() => setSelectedCenter(center)}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-4 ${
-                  selectedCenter?._id === center._id
-                    ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-950/50'
-                    : 'bg-slate-900/70 border-slate-800/80 text-slate-300 hover:border-slate-700 hover:bg-slate-900'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-xl bg-slate-800 text-indigo-400 mt-0.5">
-                    <Store className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm text-white flex items-center gap-2">
-                      {center.centerName}
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                        {center.centerCode}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                      {center.address}, {center.city}, {center.state} - {center.pincode}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-shrink-0">
-                  <div
-                    className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                      selectedCenter?._id === center._id
-                        ? 'border-indigo-500 bg-indigo-500 text-white'
-                        : 'border-slate-700'
-                    }`}
-                  >
-                    {selectedCenter?._id === center._id && <CheckCircle2 className="w-4 h-4" />}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-4 flex justify-end">
-            <Button
-              onClick={() => {
-                if (!selectedCenter) return error('Please choose a studio');
-                setStep(2);
-              }}
-              icon={ChevronRight}
-              variant="primary"
-              size="lg"
-              disabled={!selectedCenter}
-            >
-              Continue to Photo Upload
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: Photo Upload & Crop */}
-      {step === 2 && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-extrabold text-white">Upload Your Photo</h2>
-              <p className="text-xs text-slate-400">
-                Selected Studio:{' '}
-                <span className="text-indigo-400 font-semibold">{selectedCenter?.centerName}</span>
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => setStep(1)} icon={ArrowLeft}>
-              Change Studio
-            </Button>
-          </div>
-
-          {/* Upload Area */}
-          <div className="p-8 rounded-2xl bg-slate-900/60 border-2 border-dashed border-slate-700 hover:border-indigo-500/50 text-center transition-all">
-            {photoPreview ? (
-              <div className="space-y-4">
-                <div className="relative inline-block">
-                  <img
-                    src={photoPreview}
-                    alt="Selected portrait"
-                    className="w-44 h-56 object-cover rounded-xl border border-slate-700 shadow-2xl mx-auto"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setIsCropModalOpen(true)}
-                    className="absolute bottom-2 right-2 p-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg text-xs font-semibold flex items-center gap-1 transition-all"
-                  >
-                    <Crop className="w-3.5 h-3.5" />
-                    Crop &amp; BG
-                  </button>
-                </div>
-                <div className="flex items-center justify-center gap-3">
-                  <label className="cursor-pointer text-xs font-semibold text-indigo-400 hover:text-indigo-300">
-                    Replace Photo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handlePhotoSelect}
-                    />
-                  </label>
-                </div>
-              </div>
-            ) : (
-              <label className="cursor-pointer block space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 text-indigo-400 flex items-center justify-center mx-auto border border-indigo-500/20">
-                  <Upload className="w-8 h-8" />
-                </div>
-                <div>
-                  <span className="text-sm font-bold text-white block">
-                    Click to browse or take a camera selfie
-                  </span>
-                  <span className="text-xs text-slate-400 block mt-1">
-                    Supports JPEG, PNG, WEBP (Max 25MB). AI Face detection handles alignment.
-                  </span>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoSelect}
-                />
-              </label>
-            )}
-          </div>
-
-          {/* Privacy Note */}
-          <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center gap-3 text-xs text-slate-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-            <span>
-              Privacy Guarantee: Your raw photo is temporarily processed and automatically wiped 10 minutes post-print.
-            </span>
-          </div>
-
-          <div className="pt-4 flex items-center justify-between">
-            <Button variant="outline" onClick={() => setStep(1)} icon={ArrowLeft}>
-              Back
-            </Button>
-            <Button
-              onClick={() => {
-                if (!uploadedStorageKey) return error('Please upload a photo first');
-                setStep(3);
-              }}
-              icon={ChevronRight}
-              variant="primary"
-              size="lg"
-              disabled={!uploadedStorageKey}
-              isLoading={loading}
-            >
-              Continue to Sizing
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Size & Template Selection */}
-      {step === 3 && (
-        <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-extrabold text-white">Choose ID Format &amp; Quantity</h2>
-            <p className="text-xs text-slate-400">
-              Select the required government standard or card format.
-            </p>
-          </div>
-
-          {/* Templates Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {templates.map((tpl) => (
-              <div
-                key={tpl.serviceType}
-                onClick={() => {
-                  setSelectedTemplate(tpl);
-                  setCopies(tpl.defaultCopies || 8);
-                }}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                  selectedTemplate?.serviceType === tpl.serviceType
-                    ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-950/50'
-                    : 'bg-slate-900/70 border-slate-800/80 text-slate-300 hover:border-slate-700'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-sm text-white">{tpl.name}</span>
-                    <span className="text-xs font-black text-indigo-400">₹{tpl.customerPriceInr}</span>
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-3">{tpl.description}</p>
-                </div>
-
-                <div className="text-[11px] text-slate-500 font-medium">
-                  Default: {tpl.defaultCopies} copies • Paper: {tpl.paperSize}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Copies Counter */}
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold text-slate-300 block">Print Copies</span>
-              <span className="text-[11px] text-slate-400">Number of photos generated on sheet</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setCopies((c) => Math.max(1, c - 1))}
-                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center text-sm"
-              >
-                -
-              </button>
-              <span className="font-bold text-base text-white w-6 text-center">{copies}</span>
-              <button
-                type="button"
-                onClick={() => setCopies((c) => c + 1)}
-                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center text-sm"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <div className="pt-4 flex items-center justify-between">
-            <Button variant="outline" onClick={() => setStep(2)} icon={ArrowLeft}>
-              Back
-            </Button>
-            <Button
-              onClick={() => setStep(4)}
-              icon={ChevronRight}
-              variant="primary"
-              size="lg"
-            >
-              Continue to Payment
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 4: Review & Payment Checkout */}
-      {step === 4 && (
-        <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-extrabold text-white">Review &amp; Instant Checkout</h2>
-            <p className="text-xs text-slate-400">
-              Provide contact details to receive your pickup PIN and live tracking status.
-            </p>
-          </div>
-
-          {/* Customer Input Fields */}
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Rahul Sharma"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                  Mobile Number (For PIN SMS / WhatsApp) *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="+91 9876543210"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                  Email Address (Optional)
-                </label>
-                <input
-                  type="email"
-                  placeholder="name@example.com"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Choose Payment Method */}
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
-              Select Payment Option
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Option 1: Online Payment */}
-              <div
-                onClick={() => setSelectedPaymentMethod('RAZORPAY')}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3.5 ${
-                  selectedPaymentMethod === 'RAZORPAY'
-                    ? 'border-indigo-500 bg-indigo-950/40 shadow-lg shadow-indigo-950/30 ring-1 ring-indigo-500/50'
-                    : 'border-slate-800 bg-slate-950 hover:border-slate-700 opacity-75'
-                }`}
-              >
-                <div
-                  className={`p-2.5 rounded-lg shrink-0 ${
-                    selectedPaymentMethod === 'RAZORPAY'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-800 text-slate-400'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-white">Online UPI / Card</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
-                      Instant Auto-Print
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Pay via GPay, PhonePe, UPI or Cards. Photo is queued for print instantly.
-                  </p>
-                </div>
-              </div>
-
-              {/* Option 2: Cash at Counter */}
-              <div
-                onClick={() => setSelectedPaymentMethod('CASH')}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3.5 ${
-                  selectedPaymentMethod === 'CASH'
-                    ? 'border-amber-500 bg-amber-950/40 shadow-lg shadow-amber-950/30 ring-1 ring-amber-500/50'
-                    : 'border-slate-800 bg-slate-950 hover:border-slate-700 opacity-75'
-                }`}
-              >
-                <div
-                  className={`p-2.5 rounded-lg shrink-0 ${
-                    selectedPaymentMethod === 'CASH'
-                      ? 'bg-amber-500 text-slate-950 font-bold'
-                      : 'bg-slate-800 text-slate-400'
-                  }`}
-                >
-                  <Banknote className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-white">Cash at Counter</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
-                      Pay at Shop
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Pay cash directly to the operator at the studio counter to release print.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Order Summary Receipt */}
-          <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Order Breakdown
-            </h4>
-
-            <div className="flex items-center justify-between text-sm text-slate-300">
-              <span>{selectedTemplate?.name} ({copies} copies)</span>
-              <span className="font-semibold text-white">₹{selectedTemplate?.customerPriceInr}</span>
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Studio: {selectedCenter?.centerName}</span>
-              <span>Payment Mode: {selectedPaymentMethod === 'CASH' ? 'Cash at Counter' : 'Online Payment'}</span>
-            </div>
-
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-lg font-extrabold text-white">
-              <span>Total Payable</span>
-              <span className="text-indigo-400">₹{selectedTemplate?.customerPriceInr}</span>
-            </div>
-          </div>
-
-          <div className="pt-4 flex items-center justify-between">
-            <Button variant="outline" onClick={() => setStep(3)} icon={ArrowLeft}>
-              Back
-            </Button>
-            <Button
-              onClick={handleProceedToPayment}
-              icon={selectedPaymentMethod === 'CASH' ? Banknote : CreditCard}
-              variant={selectedPaymentMethod === 'CASH' ? 'amber' : 'emerald'}
-              size="lg"
-              isLoading={loading}
-            >
-              {selectedPaymentMethod === 'CASH'
-                ? `Place Order & Pay ₹${selectedTemplate?.customerPriceInr} at Counter`
-                : `Pay ₹${selectedTemplate?.customerPriceInr} via UPI / Online`}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 5: Success & Order Pickup PIN Screen */}
-      {step === 5 && completedOrder && (
-        <div className="p-8 rounded-3xl bg-slate-900 border border-emerald-500/40 text-center space-y-6 shadow-2xl">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto ring-8 ring-emerald-500/10">
+          <div className="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/20">
             <CheckCircle2 className="w-10 h-10" />
           </div>
 
-          <div>
-            <h2 className="text-3xl font-extrabold text-white">
-              {completedOrder.paymentMethod === 'CASH' ? 'Order Submitted for Printing!' : 'Order Confirmed & Dispatched!'}
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              {completedOrder.paymentMethod === 'CASH'
-                ? 'Your order has been recorded. Please pay cash at the desk to trigger printing.'
-                : "Your photo is currently transferring to the studio's desktop application for 300 DPI native printing."}
+          <div className="space-y-2">
+            <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full uppercase tracking-wider border border-emerald-500/30">
+              ⚡ Sent To Studio PC
+            </span>
+            <h2 className="text-2xl font-black text-white">Order Received!</h2>
+            <p className="text-xs text-slate-400">
+              Your photo has been sent to <strong className="text-slate-200">{selectedCenter?.centerName || 'Studio Desk'}</strong>. Automatic AI background removal and 300 DPI sheet layout are in progress.
             </p>
           </div>
 
-          {/* Cash Payment Notice if Cash Method selected */}
-          {completedOrder.paymentMethod === 'CASH' && (
-            <div className="p-4 rounded-2xl bg-amber-950/50 border border-amber-500/40 text-amber-300 text-xs flex items-center justify-center gap-3 max-w-md mx-auto text-left">
-              <Banknote className="w-6 h-6 text-amber-400 shrink-0" />
-              <div>
-                <strong className="block text-amber-200">Cash Payment Required at Counter</strong>
-                Please pay <strong>₹{completedOrder.priceInr || selectedTemplate?.customerPriceInr}</strong> to the studio counter operator and show your 4-digit PIN.
+          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-left space-y-3">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">Order Reference:</span>
+              <span className="font-mono font-bold text-cyan-400">#{String(completedOrder.orderId || completedOrder._id || '1001').slice(-6).toUpperCase()}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">Prints Count:</span>
+              <span className="font-bold text-white">{completedOrder.copies || copies} Passport Photos</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">Total Amount:</span>
+              <span className="font-bold text-emerald-400">₹{completedOrder.totalPrice || totalPrice}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">Payment Status:</span>
+              <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${completedOrder.paymentMethod === 'CASH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                {completedOrder.paymentMethod === 'CASH' ? '💵 Pay Cash at Counter' : '✅ Paid Online'}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-slate-500">
+            Please collect your printed physical passport photos from the counter operator.
+          </p>
+
+          <Button
+            onClick={() => {
+              setCompletedOrder(null);
+              setPhotoFile(null);
+              setPhotoPreview(null);
+              setUploadedStorageKey(null);
+            }}
+            variant="outline"
+            className="w-full justify-center text-xs py-3"
+          >
+            Order Another Photo
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // MAIN SIMPLE 2-STEP CUSTOMER ORDERING FORM
+  // ==========================================
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
+      {/* Studio Header Card */}
+      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/80 px-4 py-6">
+        <div className="max-w-md mx-auto flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner flex-shrink-0">
+            <Store className="w-6 h-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-black text-white truncate">
+                {selectedCenter?.centerName || 'Studio Photo Counter'}
+              </h1>
+              <span className="px-1.5 py-0.5 bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold rounded">
+                VERIFIED
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+              <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0" />
+              <span className="truncate">{selectedCenter?.city || selectedCenter?.address || 'Counter Express Print'}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto px-4 py-6 space-y-5">
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="user"
+          onChange={handlePhotoSelect}
+          className="hidden"
+        />
+
+        {/* STEP 1: PHOTO UPLOAD */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
+                1
+              </div>
+              <h2 className="text-sm font-extrabold text-white">Upload Your Photo</h2>
+            </div>
+            <span className="text-[11px] font-medium text-cyan-400 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Auto AI Clean
+            </span>
+          </div>
+
+          {!photoPreview ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-slate-700 hover:border-cyan-500 bg-slate-950/60 hover:bg-slate-950 rounded-2xl p-8 text-center cursor-pointer transition-all group flex flex-col items-center justify-center space-y-3"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                <Camera className="w-8 h-8" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-white">Tap to Take or Upload Photo</p>
+                <p className="text-xs text-slate-400">Camera / Gallery (Selfie or Portrait)</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center max-h-64 group">
+                <img
+                  src={photoPreview}
+                  alt="Customer Photo"
+                  className="max-h-60 w-auto object-contain rounded-xl p-2"
+                />
+                {isUploadingPhoto && (
+                  <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center text-cyan-400 text-xs font-bold gap-2">
+                    <RefreshCw className="w-6 h-6 animate-spin" />
+                    <span>Uploading Photo...</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11px] text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Photo Ready for Studio Print</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3 h-3" /> Change Photo
+                </button>
               </div>
             </div>
           )}
+        </div>
 
-          {/* Job Code & PIN Display */}
-          <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 max-w-md mx-auto space-y-4">
-            <div>
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-mono">Job Tracking Code</span>
-              <div className="text-2xl font-black text-indigo-400 font-mono tracking-wider mt-1">
-                {completedOrder.jobCode}
+        {/* STEP 2: CHOOSE QUANTITY (COUNT) */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
+                2
               </div>
+              <h2 className="text-sm font-extrabold text-white">How Many Photos?</h2>
             </div>
-
-            <div className="pt-3 border-t border-slate-800">
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-mono">4-Digit Pickup PIN</span>
-              <div className="text-3xl font-black text-emerald-400 font-mono tracking-widest mt-1">
-                {completedOrder.trackingPin}
-              </div>
-            </div>
+            <span className="text-xs font-bold text-slate-400">
+              ₹{pricePerUnit} / photo
+            </span>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Button
-              onClick={() =>
-                navigate(`/track?jobCode=${completedOrder.jobCode}&trackingPin=${completedOrder.trackingPin}`)
-              }
-              icon={Sparkles}
-              variant="primary"
-              size="lg"
+          {/* Quick Presets */}
+          <div className="grid grid-cols-4 gap-2">
+            {quickPresets.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setCopies(preset)}
+                className={`py-2.5 px-2 rounded-2xl border text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 ${
+                  copies === preset
+                    ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/20 scale-[1.02]'
+                    : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                }`}
+              >
+                <span>{preset} Photos</span>
+                <span className={`text-[10px] font-bold ${copies === preset ? 'text-slate-900' : 'text-slate-400'}`}>
+                  ₹{preset * pricePerUnit}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Stepper */}
+          <div className="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5">
+            <button
+              type="button"
+              disabled={copies <= minCopies}
+              onClick={() => setCopies((prev) => Math.max(minCopies, prev - 1))}
+              className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-white flex items-center justify-center transition-all"
             >
-              View Live Tracking Stepper
-            </Button>
-            <Button onClick={() => navigate('/')} variant="outline" size="lg">
-              Return Home
-            </Button>
+              <Minus className="w-4 h-4" />
+            </button>
+
+            <div className="text-center">
+              <span className="text-lg font-black text-white">{copies}</span>
+              <span className="text-xs text-slate-400 ml-1.5 font-bold">Passport Photos</span>
+            </div>
+
+            <button
+              type="button"
+              disabled={copies >= maxCopies}
+              onClick={() => setCopies((prev) => Math.min(maxCopies, prev + 1))}
+              className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-white flex items-center justify-center transition-all"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Live Total Display */}
+          <div className="bg-cyan-950/40 border border-cyan-500/30 rounded-2xl p-3 flex items-center justify-between">
+            <span className="text-xs font-bold text-cyan-300">Total Price to Pay:</span>
+            <span className="text-xl font-black text-cyan-400">₹{totalPrice}</span>
           </div>
         </div>
-      )}
 
-      {/* Interactive Photo Cropper Modal */}
-      <PhotoCropperModal
-        isOpen={isCropModalOpen}
-        onClose={() => setIsCropModalOpen(false)}
-        imageSrc={photoPreview}
-        template={selectedTemplate}
-        onConfirm={(settings) => {
-          setCropSettings(settings.cropSettings);
-          setBackgroundColor(settings.backgroundColor);
-          success('Photo adjustments saved.');
-        }}
-      />
+        {/* STEP 3: CUSTOMER MOBILE & PAYMENT */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
+              3
+            </div>
+            <h2 className="text-sm font-extrabold text-white">Your Contact &amp; Payment</h2>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                Mobile Number (WhatsApp) <span className="text-rose-400">*</span>
+              </label>
+              <div className="relative">
+                <Smartphone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="tel"
+                  placeholder="Enter 10-digit mobile number"
+                  maxLength={10}
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))}
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-white font-bold placeholder-slate-600 focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                Customer Name (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="Enter your name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-2xl px-4 py-2.5 text-sm text-white font-semibold placeholder-slate-600 focus:outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Payment Method Selector */}
+          <div className="space-y-2 pt-1">
+            <label className="block text-[11px] font-bold text-slate-400">Choose How to Pay</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('ONLINE')}
+                className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 ${
+                  paymentMethod === 'ONLINE'
+                    ? 'bg-cyan-950/60 border-cyan-400 text-white shadow-md'
+                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <CreditCard className={`w-4 h-4 ${paymentMethod === 'ONLINE' ? 'text-cyan-400' : 'text-slate-500'}`} />
+                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentMethod === 'ONLINE' ? 'border-cyan-400 bg-cyan-400' : 'border-slate-700'}`}>
+                    {paymentMethod === 'ONLINE' && <span className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-xs font-black text-white">UPI / Online</div>
+                  <div className="text-[10px] text-slate-400">GPay, PhonePe, Paytm</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('CASH')}
+                className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 ${
+                  paymentMethod === 'CASH'
+                    ? 'bg-amber-950/60 border-amber-400 text-white shadow-md'
+                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <Banknote className={`w-4 h-4 ${paymentMethod === 'CASH' ? 'text-amber-400' : 'text-slate-500'}`} />
+                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentMethod === 'CASH' ? 'border-amber-400 bg-amber-400' : 'border-slate-700'}`}>
+                    {paymentMethod === 'CASH' && <span className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-xs font-black text-white">Pay at Counter</div>
+                  <div className="text-[10px] text-slate-400">Cash on Collection</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* SUBMIT BUTTON */}
+        <button
+          type="button"
+          disabled={loading || isUploadingPhoto}
+          onClick={handleSubmitOrder}
+          className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] disabled:opacity-50 text-slate-950 font-black text-base transition-all shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 border border-cyan-300/40"
+        >
+          {loading ? (
+            <>
+              <RefreshCw className="w-5 h-5 animate-spin" />
+              <span>Sending Order to Studio...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              <span>Print {copies} Photos — ₹{totalPrice}</span>
+              <ArrowRight className="w-5 h-5 ml-1" />
+            </>
+          )}
+        </button>
+
+        <p className="text-center text-[11px] text-slate-500 flex items-center justify-center gap-1">
+          <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+          <span>Studio Express Print • High Definition 300 DPI</span>
+        </p>
+      </div>
     </div>
   );
-};
-
-export default CustomerOrderPage;
+}
