@@ -5,7 +5,7 @@ const storageService = require('../services/storageService');
 const razorpayService = require('../services/razorpayService');
 const jobEngineService = require('../services/jobEngineService');
 const Job = require('../models/Job');
-const StudioCenter = require('../models/StudioCenter');
+const Center = require('../models/Center');
 const PricingRule = require('../models/PricingRule');
 const ApiResponse = require('../utils/apiResponse');
 const { DEFAULT_TEMPLATES, SERVICE_TYPES, PAPER_SIZES } = require('../config/constants');
@@ -117,7 +117,7 @@ const getPhotoStream = async (req, res) => {
 
 const getServiceTemplates = async (req, res, next) => {
   try {
-    let rules = await PricingRule.find({ isActive: true }).lean();
+    let rules = await PricingRule.find({ status: 'ACTIVE' }).lean();
     if (!rules || rules.length === 0) {
       rules = DEFAULT_TEMPLATES;
     }
@@ -130,7 +130,7 @@ const getServiceTemplates = async (req, res, next) => {
 const listCenters = async (req, res, next) => {
   try {
     const { search, city, state, page = 1, limit = 20 } = req.query;
-    const query = { isActive: true };
+    const query = { status: 'ACTIVE' };
 
     if (search) {
       query.$or = [
@@ -143,8 +143,8 @@ const listCenters = async (req, res, next) => {
     if (city) query.city = { $regex: city, $options: 'i' };
     if (state) query.state = { $regex: state, $options: 'i' };
 
-    const total = await StudioCenter.countDocuments(query);
-    const centers = await StudioCenter.find(query)
+    const total = await Center.countDocuments(query);
+    const centers = await Center.find(query)
       .select('-pairingCode')
       .sort({ centerName: 1 })
       .skip((page - 1) * limit)
@@ -160,14 +160,14 @@ const listCenters = async (req, res, next) => {
 const getCenterBySlugOrCode = async (req, res, next) => {
   try {
     const { identifier } = req.params;
-    const center = await StudioCenter.findOne({
+    const center = await Center.findOne({
       $or: [
         { qrToken: identifier },
         { slug: identifier.toLowerCase() },
         { centerCode: identifier.toUpperCase() },
         { _id: identifier.match(/^[0-9a-fA-F]{24}$/) ? identifier : null }
       ],
-      isActive: true
+      status: 'ACTIVE'
     }).select('-pairingCode');
 
     if (!center) {
@@ -197,13 +197,13 @@ const createCustomerOrder = async (req, res, next) => {
     } = req.body;
 
     // Validate center exists
-    const center = await StudioCenter.findById(centerId);
-    if (!center || !center.isActive) {
+    const center = await Center.findById(centerId);
+    if (!center || center.status !== 'ACTIVE') {
       return ApiResponse.error(res, 'Selected Studio Center is not available', 400);
     }
 
     // Determine price & credit cost
-    const pricing = await PricingRule.findOne({ serviceType, isActive: true });
+    const pricing = await PricingRule.findOne({ serviceType, status: 'ACTIVE' });
     const template = pricing || DEFAULT_TEMPLATES.find((t) => t.serviceType === serviceType) || DEFAULT_TEMPLATES[0];
 
     const priceInr = template.customerPriceInr;
