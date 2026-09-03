@@ -1,5 +1,7 @@
 const Device = require('../models/Device');
 const Center = require('../models/Center');
+const User = require('../models/User');
+const CreditWallet = require('../models/CreditWallet');
 const Job = require('../models/Job');
 const JobItem = require('../models/JobItem');
 const UpdateRelease = require('../models/UpdateRelease');
