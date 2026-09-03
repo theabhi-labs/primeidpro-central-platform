@@ -119,9 +119,10 @@ const AdminStudios = () => {
             <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider">
               <tr>
                 <th className="py-3.5 px-4">Center Code</th>
-                <th className="py-3.5 px-4">Studio Name</th>
+                <th className="py-3.5 px-4">Studio / User</th>
                 <th className="py-3.5 px-4">Location</th>
-                <th className="py-3.5 px-4">Owner Contact</th>
+                <th className="py-3.5 px-4">Account Email</th>
+                <th className="py-3.5 px-4">Machine Hardware ID</th>
                 <th className="py-3.5 px-4">Wallet Balance</th>
                 <th className="py-3.5 px-4">Desktop Status</th>
                 <th className="py-3.5 px-4">Status</th>
@@ -147,18 +148,32 @@ const AdminStudios = () => {
                     <td className="py-3 px-4 text-slate-400">
                       {s.city}, {s.state}
                     </td>
-                    <td className="py-3 px-4">
-                      <div>{s.ownerId?.name || s.phone}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{s.email}</div>
+                                        <td className="py-3 px-4">
+                      <div className="font-mono text-cyan-300 font-bold">{s.email}</div>
+                      <div className="text-[10px] text-slate-500">{s.phone}</div>
+                    </td>
+                    <td className="py-3 px-4 font-mono">
+                      {s.primaryMachineId ? (
+                        <div className="flex flex-col gap-1">
+                          <span className="px-2 py-0.5 rounded-lg bg-slate-950 border border-cyan-800/50 text-cyan-300 text-[11px] font-bold select-all inline-block w-fit">
+                            {s.primaryMachineId}
+                          </span>
+                          {s.devicesCount > 1 && (
+                            <span className="text-[10px] text-slate-400">+{s.devicesCount - 1} more PC</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-600 italic text-[11px]">No machine bound</span>
+                      )}
                     </td>
                     <td className="py-3 px-4 font-extrabold text-emerald-400 font-mono">
-                      ₹{s.walletBalance}
+                      {s.walletBalance} Tokens
                     </td>
                     <td className="py-3 px-4">
                       <span className="flex items-center gap-1 text-[11px]">
                         <Laptop className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{s.devicesCount || 0} paired</span>
-                        {s.hasOnlineDevice && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-1"></span>}
+                        <span>{s.devicesCount || 0} PC</span>
+                        {s.hasOnlineDevice && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-1" title="Online Active"></span>}
                       </span>
                     </td>
                     <td className="py-3 px-4">

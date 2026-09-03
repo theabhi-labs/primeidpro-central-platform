@@ -93,7 +93,7 @@ class AdminController {
   }
 
   /**
-   * List Centers
+   * List Centers with Machine IDs and Connected Devices
    * GET /api/v1/admin/centers
    */
   async listCenters(req, res) {
@@ -117,7 +117,25 @@ class AdminController {
         .populate('ownerId', 'name email mobile')
         .lean();
 
-      return ApiResponse.paginate(res, centers, total, page, limit, 'Centers list');
+      // Populate connected devices and Machine IDs for each center
+      const centerIds = centers.map((c) => c._id);
+      const devices = await Device.find({ centerId: { $in: centerIds } }).lean();
+
+      const enriched = centers.map((c) => {
+        const centerDevices = devices.filter((d) => d.centerId?.toString() === c._id.toString());
+        return {
+          ...c,
+          devices: centerDevices,
+          devicesCount: centerDevices.length,
+          machineIds: centerDevices.map((d) => d.installationId).filter(Boolean),
+          primaryMachineId: centerDevices[0]?.installationId || null,
+          hasOnlineDevice: centerDevices.some(
+            (d) => d.status === 'ACTIVE' && d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() < 180000
+          )
+        };
+      });
+
+      return ApiResponse.paginate(res, enriched, total, page, limit, 'Centers list');
     } catch (err) {
       return ApiResponse.error(res, err.message, 500);
     }

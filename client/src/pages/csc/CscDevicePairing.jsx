@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Laptop,
-  Key,
   ShieldCheck,
   RefreshCw,
   Trash2,
@@ -9,21 +8,19 @@ import {
   AlertTriangle,
   Radio,
   Clock,
-  Printer
+  Printer,
+  Download,
+  KeyRound
 } from 'lucide-react';
 import { cscService } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
-import Modal from '../../components/Modal';
 
 const CscDevicePairing = () => {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pairingData, setPairingData] = useState(null);
-  const [pairingLoading, setPairingLoading] = useState(false);
-  const [pairModalOpen, setPairModalOpen] = useState(false);
-  const { success, error, info } = useToast();
+  const { success, error } = useToast();
 
   const loadDevices = async () => {
     try {
@@ -36,22 +33,6 @@ const CscDevicePairing = () => {
       error('Failed to load registered desktop devices');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGeneratePairingCode = async () => {
-    try {
-      setPairingLoading(true);
-      const res = await cscService.generatePairingCode();
-      if (res.success && res.data) {
-        setPairingData(res.data);
-        setPairModalOpen(true);
-        success('New 6-digit pairing code generated!');
-      }
-    } catch (err) {
-      error('Failed to generate pairing code');
-    } finally {
-      setPairingLoading(false);
     }
   };
 
@@ -70,7 +51,7 @@ const CscDevicePairing = () => {
 
   useEffect(() => {
     loadDevices();
-    const interval = setInterval(loadDevices, 6000); // 6s live device ping
+    const interval = setInterval(loadDevices, 8000); // 8s live device sync
     return () => clearInterval(interval);
   }, []);
 
@@ -79,25 +60,29 @@ const CscDevicePairing = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Desktop Client Pairing</h1>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">Desktop Client Devices</h1>
           <p className="text-xs text-slate-400">
-            Pair your physical Windows PCs running the Prime ID Pro Electron application.
+            Manage your authorized desktop computers running Prime ID Pro.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={handleGeneratePairingCode}
-            icon={Key}
-            variant="primary"
-            size="md"
-            isLoading={pairingLoading}
-          >
-            Generate Pairing Code
-          </Button>
-          <Button variant="outline" size="sm" onClick={loadDevices} icon={RefreshCw} isLoading={loading}>
-            Refresh
-          </Button>
+        <Button variant="outline" size="sm" onClick={loadDevices} icon={RefreshCw} isLoading={loading}>
+          Refresh Devices
+        </Button>
+      </div>
+
+      {/* Direct Login Banner */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/40 via-slate-900 to-cyan-950/40 border border-cyan-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+            <KeyRound className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white">Direct Account Login Connection</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              To connect any computer, open the Prime ID Pro desktop application and log in with your <strong className="text-white">Account Email &amp; Password</strong>.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -109,9 +94,9 @@ const CscDevicePairing = () => {
               <Laptop className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">No Desktop Devices Paired Yet</h3>
+              <h3 className="text-base font-bold text-white">No Desktop Devices Connected Yet</h3>
               <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
-                Click "Generate Pairing Code" above, launch your Prime ID Pro desktop app, and enter the 6-digit code.
+                Install Prime ID Pro on your PC and log in using your account credentials to automatically bind your hardware and sync tokens.
               </p>
             </div>
           </div>
@@ -121,8 +106,8 @@ const CscDevicePairing = () => {
               key={device._id}
               className={`p-6 rounded-2xl border backdrop-blur-xl transition-all ${
                 device.isOnline
-                  ? 'bg-slate-900/80 border-indigo-500/30 shadow-xl shadow-indigo-950/30'
-                  : 'bg-slate-950/60 border-slate-800 opacity-75'
+                  ? 'bg-slate-900/80 border-cyan-500/40 shadow-xl shadow-cyan-950/20'
+                  : 'bg-slate-950/60 border-slate-800 opacity-80'
               }`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -141,8 +126,8 @@ const CscDevicePairing = () => {
                       {device.deviceName}
                       <Badge status={device.isOnline ? 'ONLINE' : 'OFFLINE'} size="sm" />
                     </div>
-                    <div className="text-xs font-mono text-indigo-400 mt-0.5">
-                      ID: {device.deviceId}
+                    <div className="text-xs font-mono text-cyan-400 mt-0.5">
+                      Machine ID: <span className="font-bold select-all">{device.installationId || device.deviceId}</span>
                     </div>
                   </div>
                 </div>
@@ -160,22 +145,22 @@ const CscDevicePairing = () => {
               <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs text-slate-400">
                 <div>
                   <span className="block text-[10px] uppercase text-slate-500">App Version:</span>
-                  <span className="font-bold text-white">v{device.appVersion}</span>
+                  <span className="font-bold text-white">v{device.appVersion || '1.0.0'}</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase text-slate-500">Jobs Printed:</span>
-                  <span className="font-bold text-emerald-400">{device.metrics?.jobsCompleted || 0}</span>
+                  <span className="block text-[10px] uppercase text-slate-500">Status:</span>
+                  <span className="font-bold text-emerald-400">{device.status || 'ACTIVE'}</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase text-slate-500">Printer:</span>
-                  <span className="font-medium text-slate-300 truncate block">
-                    {device.metrics?.printerName || 'Default Windows Printer'}
+                  <span className="block text-[10px] uppercase text-slate-500">Hardware Bound:</span>
+                  <span className="font-mono text-slate-300 truncate block">
+                    {device.installationId ? 'Hardware Verified' : 'Standard'}
                   </span>
                 </div>
                 <div>
                   <span className="block text-[10px] uppercase text-slate-500">Last Seen:</span>
                   <span className="font-mono text-slate-300">
-                    {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleTimeString() : 'Never'}
+                    {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : 'Never'}
                   </span>
                 </div>
               </div>
@@ -183,45 +168,6 @@ const CscDevicePairing = () => {
           ))
         )}
       </div>
-
-      {/* Pairing Code Modal */}
-      <Modal
-        isOpen={pairModalOpen}
-        onClose={() => setPairModalOpen(false)}
-        title="Desktop App 6-Digit Pairing Code"
-        maxWidth="max-w-md"
-      >
-        {pairingData && (
-          <div className="space-y-6 text-center">
-            <div>
-              <p className="text-xs text-slate-400 mb-4">
-                Open Prime ID Pro Electron application on your studio PC, go to <strong>Settings → Connect to Cloud</strong>, and enter this code:
-              </p>
-
-              <div className="p-6 rounded-2xl bg-slate-950 border-2 border-dashed border-indigo-500/60 inline-block">
-                <div className="text-4xl font-black text-indigo-400 tracking-[0.3em] font-mono">
-                  {pairingData.pairingCode}
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-amber-400">
-                <Clock className="w-3.5 h-3.5" />
-                <span>Code expires in 15 minutes</span>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 text-left space-y-1">
-              <div>• <strong>Studio:</strong> {pairingData.centerName}</div>
-              <div>• <strong>Center Code:</strong> {pairingData.centerCode}</div>
-              <div>• Automatically generates a permanent hardware bound token.</div>
-            </div>
-
-            <Button onClick={() => setPairModalOpen(false)} variant="primary" className="w-full">
-              Done
-            </Button>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

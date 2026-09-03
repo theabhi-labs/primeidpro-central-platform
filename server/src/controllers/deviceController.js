@@ -14,35 +14,67 @@ const crypto = require('crypto');
 
 class DeviceController {
   /**
-   * Register/Pair a new Electron desktop client
+   * Register/Pair a new Electron desktop client via Account Email & Password
    * POST /api/v1/devices/register
    */
   async registerDevice(req, res) {
     try {
-      const rawCode = req.body.pairingCode || req.body.pairingPin || req.body.pin || req.body.code;
-      const pairingCode = typeof rawCode === 'string' ? rawCode.trim() : (rawCode ? String(rawCode).trim() : '');
+      const email = req.body.email || req.body.accountId || req.body.username;
+      const password = req.body.password || req.body.licenseKey || req.body.key;
       const installationId = req.body.installationId || req.body.machineId || req.body.hardwareFingerprint || req.body.deviceId || `inst_${crypto.randomUUID()}`;
       const deviceName = req.body.deviceName || req.body.terminalLabel || req.body.label || req.body.pcLabel || 'Front Counter PC';
       const hardwareFingerprint = req.body.hardwareFingerprint || req.body.fingerprint || '';
       const appVersion = req.body.appVersion || '1.0.0';
       const osPlatform = req.body.osPlatform || req.body.platform || 'win32';
 
-      if (!pairingCode) {
-        return ApiResponse.error(res, '6-digit Pairing Code is required', 400);
+      if (!email || !password) {
+        return ApiResponse.error(res, 'Account Email and Password are required to link your device.', 400);
       }
 
-      // 1. Verify Pairing Code
-      const center = await Center.findOne({
-        pairingCode,
-        pairingCodeExpiresAt: { $gt: new Date() }
-      });
+      // 1. Authenticate User
+      const User = require('../models/User');
+      const user = await User.findOne({ email: email.toLowerCase().trim() });
+      if (!user) {
+        return ApiResponse.error(res, 'Invalid account email or password. Please check your credentials.', 401);
+      }
 
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return ApiResponse.error(res, 'Invalid account email or password.', 401);
+      }
+
+      if (user.status === 'BLOCKED' || user.status === 'SUSPENDED') {
+        return ApiResponse.error(res, 'Your account has been suspended. Please contact support.', 403);
+      }
+
+      user.lastLoginAt = new Date();
+      await user.save();
+
+      // 2. Find or create Center for this user
+      let center = user.centerId ? await Center.findById(user.centerId) : await Center.findOne({ ownerId: user._id });
       if (!center) {
-        return ApiResponse.error(res, 'Invalid or expired 6-digit pairing code. Please generate a fresh code from your CSC Operator Portal.', 400);
+        const centerCode = `CSC-${Math.floor(1000 + Math.random() * 9000)}`;
+        center = await Center.create({
+          ownerId: user._id,
+          centerName: `${user.name}'s Studio`,
+          centerCode,
+          phone: user.mobile || user.phone || '9999999999',
+          email: user.email,
+          status: 'ACTIVE',
+          walletBalance: 20
+        });
+        user.centerId = center._id;
+        await user.save();
       }
 
-      if (center.status === 'SUSPENDED' || center.status === 'BLOCKED') {
-        return ApiResponse.error(res, 'Studio Center account is suspended or blocked', 403);
+      let wallet = await CreditWallet.findOne({ centerId: center._id });
+      if (!wallet) {
+        wallet = await CreditWallet.create({
+          centerId: center._id,
+          currentBalance: center.walletBalance || 20,
+          lifetimePurchased: 20,
+          lifetimeUsed: 0
+        });
       }
 
       // If this installation was previously bound to another center, revoke the old binding
@@ -57,7 +89,7 @@ class DeviceController {
         logger.info(`[DeviceController] Revoked previous center binding for installation ${installationId}`);
       }
 
-      // 2. Generate unique Device ID
+      // 3. Generate unique Device ID & Device Token
       const deviceId = `PIP-DEV-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
       const tokenPayload = {
         deviceId,
@@ -67,7 +99,7 @@ class DeviceController {
       const deviceToken = signDeviceToken(tokenPayload);
       const authTokenHash = crypto.createHash('sha256').update(deviceToken).digest('hex');
 
-      // 3. Upsert Device Record
+      // 4. Upsert Device Record
       let device = await Device.findOne({ installationId, centerId: center._id });
       if (device) {
         device.deviceId = deviceId;
@@ -96,36 +128,37 @@ class DeviceController {
         });
       }
 
-      // Clear used pairing code
-      center.pairingCode = null;
-      center.pairingCodeExpiresAt = null;
-      await center.save();
-
       // Audit Log
       await AuditLog.create({
         action: 'DEVICE_REGISTERED',
-        performedBy: center.ownerId,
-        performedByRole: 'CSC',
+        performedBy: user._id,
+        performedByRole: user.role || 'CSC',
         targetType: 'DEVICE',
         targetId: device._id,
-        details: { deviceId, installationId, centerCode: center.centerCode },
+        details: { deviceId, installationId, centerCode: center.centerCode, email: user.email },
         ipAddress: req.ip
       });
 
-      logger.info(`[DeviceController] Desktop device ${deviceId} paired successfully with Center ${center.centerCode}`);
+      logger.info(`[DeviceController] Desktop device ${deviceId} (Machine: ${installationId}) logged in & bound to ${user.email}`);
 
       return ApiResponse.success(res, {
         deviceId: device.deviceId,
         deviceToken,
         token: deviceToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        },
         center: {
           id: center._id,
           _id: center._id,
           centerName: center.centerName,
           centerCode: center.centerCode,
-          walletBalance: center.walletBalance
+          walletBalance: wallet ? wallet.currentBalance : center.walletBalance
         }
-      }, 'Device paired successfully');
+      }, 'Device authenticated and linked successfully');
     } catch (err) {
       logger.error(`[DeviceController] Register device error: ${err.message}`);
       return ApiResponse.error(res, err.message, 500);
