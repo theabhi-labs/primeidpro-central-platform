@@ -93,13 +93,13 @@ class LocalStorageDriver extends StorageDriver {
     }
   }
 
-  async getSignedUploadUrl({ storageKey, mimeType, expiresInSeconds = 900 }) {
+  async getSignedUploadUrl({ storageKey, mimeType, expiresInSeconds = 86400 }) {
     const { cleanKey } = this._sanitizeKey(storageKey);
     const domain = env.DOMAIN || 'https://primeidpro-central-platform.onrender.com';
     return `${domain}/api/v1/customer/upload-photo?storageKey=${encodeURIComponent(cleanKey)}`;
   }
 
-  async getSignedDownloadUrl({ storageKey, expiresInSeconds = 900 }) {
+  async getSignedDownloadUrl({ storageKey, expiresInSeconds = 86400 }) {
     const { cleanKey } = this._sanitizeKey(storageKey);
     // Generate secure HMAC signature with expiration
     const expiresAt = Date.now() + expiresInSeconds * 1000;
