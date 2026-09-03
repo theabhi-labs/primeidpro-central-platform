@@ -76,7 +76,7 @@ const getJobsQueue = async (req, res, next) => {
 
     if (status && status !== 'ALL') {
       if (status === 'PENDING') {
-        query.jobStatus = { $in: [JOB_STATUS.DISPATCHED, JOB_STATUS.DOWNLOADING, JOB_STATUS.PROCESSING, JOB_STATUS.READY, JOB_STATUS.PRINTING] };
+        query.jobStatus = { $in: [JOB_STATUS.QUEUED, JOB_STATUS.CREATED, JOB_STATUS.DISPATCHED, JOB_STATUS.DOWNLOADING, JOB_STATUS.PROCESSING, JOB_STATUS.READY, JOB_STATUS.PRINTING] };
       } else {
         query.jobStatus = status;
       }

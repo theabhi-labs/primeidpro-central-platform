@@ -168,20 +168,21 @@ class OrderController {
       const jobCode = `PIP-${new Date().getFullYear()}-${uniqueSuffix}`;
       const trackingPin = Math.floor(1000 + Math.random() * 9000).toString();
 
-      // 5. Create Job Record
+      // 5. Create Job Record (Ready for instant desktop & web pickup)
       const job = await Job.create({
         jobCode,
         centerId: center._id,
-        serviceType,
-        serviceName: serviceType === 'PASSPORT_PHOTO' ? 'Indian Passport (35x45mm)' : serviceType,
-        customerName,
-        customerPhone,
-        customerEmail,
+        serviceType: normalizedServiceType,
+        serviceName: normalizedServiceType === 'PASSPORT_PHOTO' ? 'Indian Passport (35x45mm)' : normalizedServiceType,
+        customerName: finalCustomerName,
+        customerPhone: finalCustomerPhone,
+        customerEmail: customerEmail || `${finalCustomerPhone}@primeidpro.customer`,
         copies: totalQuantity,
         priceInr: totalAmount,
         creditRateSnapshot: 2,
         creditCost,
-        jobStatus: paymentMethod === 'CASH' ? 'CREATED' : 'CREATED',
+        jobStatus: 'QUEUED',
+        paymentStatus: paymentMethod === 'CASH' ? 'CASH_PENDING' : 'PENDING',
         itemsCount: resolvedPhotos.length,
         itemsData: resolvedPhotos,
         temporaryStorageKey: resolvedPhotos[0]?.storageKey || storageKey || '',
@@ -189,7 +190,7 @@ class OrderController {
         cropSettings: resolvedPhotos[0]?.cropSettings || cropSettings,
         backgroundColor: resolvedPhotos[0]?.backgroundColor || backgroundColor || '#FFFFFF',
         trackingPin,
-        photoExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000) // 2h initial upload TTL
+        photoExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000)
       });
 
       // 6. Create JobItem records for each photo

@@ -322,7 +322,7 @@ class DeviceController {
         $and: [
           {
             $or: [
-              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED'] } },
+              { jobStatus: { $in: ['QUEUED', 'CREATED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'PENDING'] } },
               { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
             ]
           }
