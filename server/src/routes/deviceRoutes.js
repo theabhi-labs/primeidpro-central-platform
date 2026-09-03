@@ -8,6 +8,7 @@ const { deviceLimiter } = require('../middleware/rateLimiter');
 router.post('/register', deviceLimiter, deviceController.registerDevice);
 router.post('/pair', deviceLimiter, deviceController.registerDevice);
 router.post('/activate', deviceLimiter, deviceController.activateDevice);
+router.post('/sync-wallet', deviceController.syncWallet);
 
 // Authenticated device endpoints
 router.post('/heartbeat', deviceAuthMiddleware, deviceController.heartbeat);

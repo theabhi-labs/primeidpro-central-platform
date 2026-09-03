@@ -216,6 +216,59 @@ class DeviceController {
   }
 
   /**
+   * Live Wallet Balance Sync for Desktop App
+   * POST /api/v1/devices/sync-wallet
+   */
+  async syncWallet(req, res) {
+    try {
+      const email = req.body.email || req.body.accountId;
+      const installationId = req.body.installationId || req.body.machineId;
+
+      if (!email && !installationId) {
+        return ApiResponse.error(res, 'Email or Installation ID is required', 400);
+      }
+
+      let center = null;
+      if (email) {
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (user) {
+          center = user.centerId ? await Center.findById(user.centerId) : await Center.findOne({ ownerId: user._id });
+        }
+      }
+
+      if (!center && installationId) {
+        const device = await Device.findOne({ installationId, status: { $ne: 'REVOKED' } });
+        if (device && device.centerId) {
+          center = await Center.findById(device.centerId);
+        }
+      }
+
+      if (!center) {
+        return ApiResponse.error(res, 'Center or User account not found', 404);
+      }
+
+      const wallet = await CreditWallet.findOne({ centerId: center._id });
+      const currentBalance = wallet ? wallet.currentBalance : (center.walletBalance ?? 0);
+
+      // Also update device lastSeenAt if installationId provided
+      if (installationId) {
+        await Device.updateOne({ installationId }, { $set: { lastSeenAt: new Date() } });
+      }
+
+      return ApiResponse.success(res, {
+        centerId: center._id,
+        centerCode: center.centerCode,
+        walletBalance: currentBalance,
+        credits: currentBalance,
+        status: center.status
+      }, 'Wallet balance synced');
+    } catch (err) {
+      logger.error(`[DeviceController] Sync wallet error: ${err.message}`);
+      return ApiResponse.error(res, err.message, 500);
+    }
+  }
+
+  /**
    * Desktop Heartbeat
    * POST /api/v1/devices/heartbeat
    */
