@@ -77,7 +77,7 @@ class OrderController {
         centerId: center._id,
         centerName: center.centerName,
         centerCode: center.centerCode,
-        serviceType,
+        serviceType: normalizedServiceType,
         unitPrice,
         quantity,
         subtotal,
@@ -116,9 +116,9 @@ class OrderController {
         backgroundColor
       } = req.body;
 
-      if (!customerName || !customerPhone) {
-        return ApiResponse.error(res, 'Customer name and phone number are required', 400);
-      }
+      const finalCustomerName = (customerName && customerName.trim()) ? customerName.trim() : 'Walk-in Customer';
+      const finalCustomerPhone = (customerPhone && customerPhone.trim()) ? customerPhone.trim() : `99999${Date.now().toString().slice(-5)}`;
+      const normalizedServiceType = (serviceType === 'PASSPORT_4X6' || !serviceType) ? 'PASSPORT_PHOTO' : serviceType;
 
       // 1. Resolve Center
       let center = null;

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
-  Upload,
   Camera,
   CheckCircle2,
   Sparkles,
@@ -11,13 +10,10 @@ import {
   Banknote,
   ShieldCheck,
   MapPin,
-  Clock,
   Plus,
   Minus,
   ArrowRight,
-  Smartphone,
-  RefreshCw,
-  Image as ImageIcon
+  RefreshCw
 } from 'lucide-react';
 import { customerService, paymentService } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
@@ -26,8 +22,7 @@ import Button from '../../components/Button';
 export default function CustomerOrderPage() {
   const { slug, token } = useParams();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { success, error, info } = useToast();
+  const { success, error } = useToast();
   const fileInputRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
@@ -35,17 +30,15 @@ export default function CustomerOrderPage() {
 
   // Center & Settings
   const [selectedCenter, setSelectedCenter] = useState(null);
-  const [centers, setCenters] = useState([]);
   const [serviceSettings, setServiceSettings] = useState({
-    pricePerPhoto: 6,
+    pricePerPhoto: 7,
     minimumQuantity: 4,
     maximumQuantity: 32,
     onlinePaymentEnabled: true,
     cashPaymentEnabled: true,
   });
 
-  // Customer Inputs
-  const [photoFile, setPhotoFile] = useState(null);
+  // Photo & Order State
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploadedStorageKey, setUploadedStorageKey] = useState(null);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
@@ -53,8 +46,7 @@ export default function CustomerOrderPage() {
 
   const [copies, setCopies] = useState(8);
   const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('ONLINE'); // 'ONLINE' | 'CASH'
+  const [paymentMethod, setPaymentMethod] = useState('CASH'); // Default Cash at Counter
 
   // Completed State
   const [completedOrder, setCompletedOrder] = useState(null);
@@ -66,7 +58,6 @@ export default function CustomerOrderPage() {
         setInitialLoading(true);
         const centerRes = await customerService.listCenters();
         const centerList = (centerRes.success && centerRes.data) ? centerRes.data : [];
-        setCenters(centerList);
 
         const targetId = slug || token || searchParams.get('center') || searchParams.get('token');
         let activeCenter = null;
@@ -85,9 +76,7 @@ export default function CustomerOrderPage() {
           try {
             const singleRes = await customerService.getCenter(targetId);
             activeCenter = singleRes.data?.data || singleRes.data;
-          } catch (e) {
-            // direct fetch fallback failed
-          }
+          } catch (e) {}
         }
 
         if (!activeCenter && centerList.length > 0) {
@@ -120,7 +109,6 @@ export default function CustomerOrderPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setPhotoFile(file);
     const objectUrl = URL.createObjectURL(file);
     setPhotoPreview(objectUrl);
 
@@ -133,7 +121,7 @@ export default function CustomerOrderPage() {
       if (res.success && res.data) {
         setUploadedStorageKey(res.data.storageKey);
         setUploadedPhotoUrl(res.data.photoUrl);
-        success('Photo uploaded! Choose copies and tap print.');
+        success('Photo uploaded successfully!');
       }
     } catch (err) {
       error('Upload failed: ' + (err.formattedMessage || err.message));
@@ -145,7 +133,7 @@ export default function CustomerOrderPage() {
   // Quantity presets
   const minCopies = serviceSettings.minimumQuantity || 4;
   const maxCopies = serviceSettings.maximumQuantity || 32;
-  const pricePerUnit = serviceSettings.pricePerPhoto || 6;
+  const pricePerUnit = serviceSettings.pricePerPhoto || 7;
   const totalPrice = copies * pricePerUnit;
 
   const quickPresets = [4, 8, 16, 24, 32].filter(
@@ -165,19 +153,16 @@ export default function CustomerOrderPage() {
       if (fileInputRef.current) fileInputRef.current.click();
       return;
     }
-    if (!customerPhone || customerPhone.length < 10) {
-      error('Please enter a valid 10-digit mobile number for order delivery.');
-      return;
-    }
 
     setLoading(true);
     try {
       const orderPayload = {
         centerId: selectedCenter._id,
         customerName: customerName.trim() || 'Walk-in Customer',
-        customerPhone: customerPhone.trim(),
-        customerEmail: `${customerPhone.trim()}@primeidpro.customer`,
-        serviceType: 'PASSPORT_4X6',
+        customerPhone: `99999${Date.now().toString().slice(-5)}`,
+        customerEmail: `customer_${Date.now().toString().slice(-5)}@primeidpro.customer`,
+        serviceType: 'PASSPORT_PHOTO',
+        quantity: Number(copies),
         copies: Number(copies),
         storageKey: uploadedStorageKey,
         photoUrl: uploadedPhotoUrl,
@@ -243,8 +228,7 @@ export default function CustomerOrderPage() {
             }
           },
           prefill: {
-            name: customerName,
-            contact: customerPhone,
+            name: customerName || 'Walk-in Customer',
           },
           theme: {
             color: '#06b6d4',
@@ -309,7 +293,7 @@ export default function CustomerOrderPage() {
             </span>
             <h2 className="text-2xl font-black text-white">Order Received!</h2>
             <p className="text-xs text-slate-400">
-              Your photo has been sent to <strong className="text-slate-200">{selectedCenter?.centerName || 'Studio Desk'}</strong>. Automatic AI background removal and 300 DPI sheet layout are in progress.
+              Your photo has been sent to <strong className="text-slate-200">{selectedCenter?.centerName || 'Studio Desk'}</strong>. AI background removal and 300 DPI sheet layout are in progress.
             </p>
           </div>
 
@@ -327,7 +311,7 @@ export default function CustomerOrderPage() {
               <span className="font-bold text-emerald-400">₹{completedOrder.totalPrice || totalPrice}</span>
             </div>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400">Payment Status:</span>
+              <span className="text-slate-400">Payment:</span>
               <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${completedOrder.paymentMethod === 'CASH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
                 {completedOrder.paymentMethod === 'CASH' ? '💵 Pay Cash at Counter' : '✅ Paid Online'}
               </span>
@@ -335,13 +319,12 @@ export default function CustomerOrderPage() {
           </div>
 
           <p className="text-[11px] text-slate-500">
-            Please collect your printed physical passport photos from the counter operator.
+            Please collect your printed physical photos from the studio operator.
           </p>
 
           <Button
             onClick={() => {
               setCompletedOrder(null);
-              setPhotoFile(null);
               setPhotoPreview(null);
               setUploadedStorageKey(null);
             }}
@@ -361,7 +344,7 @@ export default function CustomerOrderPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
       {/* Studio Header Card */}
-      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/80 px-4 py-6">
+      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/80 px-4 py-5">
         <div className="max-w-md mx-auto flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner flex-shrink-0">
             <Store className="w-6 h-6" />
@@ -383,7 +366,7 @@ export default function CustomerOrderPage() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6 space-y-5">
+      <div className="max-w-md mx-auto px-4 py-5 space-y-4">
         {/* Hidden File Input */}
         <input
           ref={fileInputRef}
@@ -411,14 +394,14 @@ export default function CustomerOrderPage() {
           {!photoPreview ? (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-700 hover:border-cyan-500 bg-slate-950/60 hover:bg-slate-950 rounded-2xl p-8 text-center cursor-pointer transition-all group flex flex-col items-center justify-center space-y-3"
+              className="border-2 border-dashed border-slate-700 hover:border-cyan-500 bg-slate-950/60 hover:bg-slate-950 rounded-2xl p-7 text-center cursor-pointer transition-all group flex flex-col items-center justify-center space-y-3"
             >
               <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
                 <Camera className="w-8 h-8" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-bold text-white">Tap to Take or Upload Photo</p>
-                <p className="text-xs text-slate-400">Camera / Gallery (Selfie or Portrait)</p>
+                <p className="text-sm font-bold text-white">Tap to Take or Select Photo</p>
+                <p className="text-xs text-slate-400">Camera or Gallery (Selfie / Portrait)</p>
               </div>
             </div>
           ) : (
@@ -438,9 +421,9 @@ export default function CustomerOrderPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <div className="text-[11px] text-emerald-400 flex items-center gap-1">
+                <div className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Photo Ready for Studio Print</span>
+                  <span>Photo Ready</span>
                 </div>
                 <button
                   type="button"
@@ -517,98 +500,74 @@ export default function CustomerOrderPage() {
 
           {/* Live Total Display */}
           <div className="bg-cyan-950/40 border border-cyan-500/30 rounded-2xl p-3 flex items-center justify-between">
-            <span className="text-xs font-bold text-cyan-300">Total Price to Pay:</span>
+            <span className="text-xs font-bold text-cyan-300">Total Amount:</span>
             <span className="text-xl font-black text-cyan-400">₹{totalPrice}</span>
           </div>
         </div>
 
-        {/* STEP 3: CUSTOMER MOBILE & PAYMENT */}
+        {/* STEP 3: PAYMENT METHOD */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
               3
             </div>
-            <h2 className="text-sm font-extrabold text-white">Your Contact &amp; Payment</h2>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">
-                Mobile Number (WhatsApp) <span className="text-rose-400">*</span>
-              </label>
-              <div className="relative">
-                <Smartphone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="tel"
-                  placeholder="Enter 10-digit mobile number"
-                  maxLength={10}
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-white font-bold placeholder-slate-600 focus:outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">
-                Customer Name (Optional)
-              </label>
-              <input
-                type="text"
-                placeholder="Enter your name"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-2xl px-4 py-2.5 text-sm text-white font-semibold placeholder-slate-600 focus:outline-none transition-all"
-              />
-            </div>
+            <h2 className="text-sm font-extrabold text-white">Choose How to Pay</h2>
           </div>
 
           {/* Payment Method Selector */}
-          <div className="space-y-2 pt-1">
-            <label className="block text-[11px] font-bold text-slate-400">Choose How to Pay</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('ONLINE')}
-                className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 ${
-                  paymentMethod === 'ONLINE'
-                    ? 'bg-cyan-950/60 border-cyan-400 text-white shadow-md'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <CreditCard className={`w-4 h-4 ${paymentMethod === 'ONLINE' ? 'text-cyan-400' : 'text-slate-500'}`} />
-                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentMethod === 'ONLINE' ? 'border-cyan-400 bg-cyan-400' : 'border-slate-700'}`}>
-                    {paymentMethod === 'ONLINE' && <span className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
-                  </span>
-                </div>
-                <div>
-                  <div className="text-xs font-black text-white">UPI / Online</div>
-                  <div className="text-[10px] text-slate-400">GPay, PhonePe, Paytm</div>
-                </div>
-              </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('CASH')}
+              className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 ${
+                paymentMethod === 'CASH'
+                  ? 'bg-amber-950/60 border-amber-400 text-white shadow-md'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <Banknote className={`w-4 h-4 ${paymentMethod === 'CASH' ? 'text-amber-400' : 'text-slate-500'}`} />
+                <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentMethod === 'CASH' ? 'border-amber-400 bg-amber-400' : 'border-slate-700'}`}>
+                  {paymentMethod === 'CASH' && <span className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-black text-white">Pay at Counter</div>
+                <div className="text-[10px] text-slate-400">Cash on Collection</div>
+              </div>
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('CASH')}
-                className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 ${
-                  paymentMethod === 'CASH'
-                    ? 'bg-amber-950/60 border-amber-400 text-white shadow-md'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <Banknote className={`w-4 h-4 ${paymentMethod === 'CASH' ? 'text-amber-400' : 'text-slate-500'}`} />
-                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentMethod === 'CASH' ? 'border-amber-400 bg-amber-400' : 'border-slate-700'}`}>
-                    {paymentMethod === 'CASH' && <span className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
-                  </span>
-                </div>
-                <div>
-                  <div className="text-xs font-black text-white">Pay at Counter</div>
-                  <div className="text-[10px] text-slate-400">Cash on Collection</div>
-                </div>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('ONLINE')}
+              className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 ${
+                paymentMethod === 'ONLINE'
+                  ? 'bg-cyan-950/60 border-cyan-400 text-white shadow-md'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <CreditCard className={`w-4 h-4 ${paymentMethod === 'ONLINE' ? 'text-cyan-400' : 'text-slate-500'}`} />
+                <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentMethod === 'ONLINE' ? 'border-cyan-400 bg-cyan-400' : 'border-slate-700'}`}>
+                  {paymentMethod === 'ONLINE' && <span className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-black text-white">UPI / Online</div>
+                <div className="text-[10px] text-slate-400">GPay, PhonePe, Paytm</div>
+              </div>
+            </button>
+          </div>
+
+          {/* Optional Name */}
+          <div className="pt-1">
+            <input
+              type="text"
+              placeholder="Your Name (Optional)"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none transition-all"
+            />
           </div>
         </div>
 
