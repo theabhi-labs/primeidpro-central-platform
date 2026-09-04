@@ -22,7 +22,7 @@ class LocalStorageDriver extends StorageDriver {
     }
     // Prevent directory traversal attacks
     const normalized = path.normalize(storageKey).replace(/^(\.\.[\/\\])+/, '');
-    const cleanKey = normalized.replace(/^[\/\\]+/, '');
+    const cleanKey = normalized.replace(/^[\/\\]+/, '').replace(/\\/g, '/');
     const fullPath = path.join(this.localDir, cleanKey);
 
     // Verify resolved path stays within localDir

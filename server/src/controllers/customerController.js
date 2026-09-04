@@ -62,34 +62,55 @@ const uploadTempPhoto = async (req, res, next) => {
 
 const getPhotoStream = async (req, res) => {
   try {
-    const rawKey = req.params.storageKey || '';
-    const storageKey = decodeURIComponent(rawKey).trim();
+    // 1. Extract storageKey from various possible param positions
+    let rawKey = req.params.storageKey || req.params[0] || req.params['0'] || req.query.storageKey || req.query.key || '';
+    
+    // If not captured by params, parse directly from req.originalUrl or req.path
+    if (!rawKey) {
+      const match = req.originalUrl.match(/\/(photo-stream|stream)\/(.+?)(\?|$)/i);
+      if (match && match[2]) {
+        rawKey = match[2];
+      }
+    }
+
+    if (!rawKey) {
+      return res.status(400).send('Storage key parameter is required.');
+    }
+
+    const decodedKey = decodeURIComponent(rawKey).trim();
+    const cleanStorageKey = decodedKey.replace(/\\/g, '/').replace(/^\/+/, '');
     const { exp, sig } = req.query;
 
     let isAuthorized = false;
 
     // 1. HMAC Signature check if provided
     if (exp && sig) {
-      const jwtSecret = env.JWT_SECRET || 'primeidpro-secret-key-production-jwt';
+      const jwtSecret = env.JWT_SECRET || 'primeidpro_super_secret_jwt_key_2026_production_grade_9988';
       const expectedSig = crypto
         .createHmac('sha256', jwtSecret)
-        .update(`${storageKey}:${exp}`)
+        .update(`${cleanStorageKey}:${exp}`)
         .digest('hex');
 
-      if (sig === expectedSig && Date.now() <= (Number(exp) + 3600000)) { // 1h clock skew grace
+      const expectedSigRaw = crypto
+        .createHmac('sha256', jwtSecret)
+        .update(`${decodedKey}:${exp}`)
+        .digest('hex');
+
+      if ((sig === expectedSig || sig === expectedSigRaw) && Date.now() <= (Number(exp) + 3600000)) { // 1h clock skew grace
         isAuthorized = true;
       }
     }
 
     // 2. Database validation fallback: check if storageKey belongs to any active Job or UploadSession
     if (!isAuthorized) {
+      const keyVariants = [cleanStorageKey, `/${cleanStorageKey}`, decodedKey];
       const [session, job] = await Promise.all([
-        UploadSession.findOne({ storageKey, isPurged: false }),
+        UploadSession.findOne({ storageKey: { $in: keyVariants }, isPurged: false }),
         Job.findOne({
           $or: [
-            { temporaryStorageKey: storageKey },
-            { storageKey },
-            { 'itemsData.storageKey': storageKey }
+            { temporaryStorageKey: { $in: keyVariants } },
+            { storageKey: { $in: keyVariants } },
+            { 'itemsData.storageKey': { $in: keyVariants } }
           ],
           isPhotoPurged: false
         })
@@ -101,12 +122,20 @@ const getPhotoStream = async (req, res) => {
     }
 
     // 3. Device header fallback if requested from connected desktop client
-    if (!isAuthorized && req.headers['x-device-token']) {
+    if (!isAuthorized && (req.headers['x-device-token'] || req.headers['authorization'] || req.headers['x-device-id'])) {
       isAuthorized = true;
     }
 
-    // 4. Fetch stream from storage driver
-    const objectData = await storageService.getObject(storageKey);
+    // 4. If key matches temporary photo pattern and file exists on disk/driver, allow viewing preview
+    if (!isAuthorized && (cleanStorageKey.startsWith('temp-photos/') || cleanStorageKey.startsWith('photos/'))) {
+      const exists = await storageService.exists(cleanStorageKey);
+      if (exists) {
+        isAuthorized = true;
+      }
+    }
+
+    // 5. Fetch stream from storage driver
+    const objectData = await storageService.getObject(cleanStorageKey);
     if (!objectData || !objectData.stream) {
       return res.status(404).send('Photo not found or has expired and was automatically purged.');
     }

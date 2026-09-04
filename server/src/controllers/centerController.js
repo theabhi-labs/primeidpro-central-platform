@@ -169,6 +169,14 @@ class CenterController {
         return ApiResponse.error(res, 'Order or print job not found', 404);
       }
 
+      // Tenant isolation: Operator can only manage orders for their own center
+      if (order && centerId && order.centerId && order.centerId.toString() !== centerId.toString() && req.user?.role !== 'SUPER_ADMIN' && req.user?.role !== 'ADMIN') {
+        return ApiResponse.error(res, 'Unauthorized: You cannot access orders belonging to another studio center', 403);
+      }
+      if (job && centerId && job.centerId && job.centerId.toString() !== centerId.toString() && req.user?.role !== 'SUPER_ADMIN' && req.user?.role !== 'ADMIN') {
+        return ApiResponse.error(res, 'Unauthorized: You cannot access jobs belonging to another studio center', 403);
+      }
+
       // Mark Order as Paid
       if (order) {
         order.paymentStatus = 'PAID';

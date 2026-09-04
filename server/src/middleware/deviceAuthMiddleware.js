@@ -34,6 +34,10 @@ const authenticateDevice = async (req, res, next) => {
       return ApiResponse.error(res, 'Device identifier mismatch between header and token', 401);
     }
 
+    if (installationId && decoded.installationId && installationId !== decoded.installationId) {
+      return ApiResponse.error(res, 'Installation ID mismatch between header and token', 401);
+    }
+
     let device = await Device.findOne({ deviceId: targetDeviceId });
     if (!device && installationId) {
       device = await Device.findOne({ installationId, status: 'ACTIVE' });
@@ -42,9 +46,13 @@ const authenticateDevice = async (req, res, next) => {
       return ApiResponse.error(res, 'Device not registered or binding removed', 401);
     }
 
-    // Gracefully sync installation identity if client updated or reinstalled
-    if (installationId && device.installationId !== installationId) {
-      device.installationId = installationId;
+    // If installation ID is provided and mismatches token, or mismatches device when no token installationId is set
+    if (installationId && decoded.installationId && installationId === decoded.installationId) {
+      if (device.installationId !== installationId) {
+        device.installationId = installationId;
+      }
+    } else if (installationId && !decoded.installationId && device.installationId && installationId !== device.installationId) {
+      return ApiResponse.error(res, 'Installation ID mismatch for registered device', 401);
     }
 
     // Verify center binding

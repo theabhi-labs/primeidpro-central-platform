@@ -18,6 +18,7 @@ class OrderController {
   async getQuote(req, res) {
     try {
       const { serviceType = 'PASSPORT_PHOTO', quantity, centerId, qrToken } = req.body;
+      const normalizedServiceType = (serviceType === 'PASSPORT_4X6' || !serviceType) ? 'PASSPORT_PHOTO' : serviceType;
 
       if (!quantity || quantity < 1) {
         return ApiResponse.error(res, 'Quantity must be at least 1', 400);

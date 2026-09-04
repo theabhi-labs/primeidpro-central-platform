@@ -18,8 +18,16 @@ router.post('/jobs/:jobId/ack', deviceAuthMiddleware, deviceController.acknowled
 router.post('/jobs/:jobId/status', deviceAuthMiddleware, deviceController.updateJobStatus);
 router.post('/jobs/:jobId/complete', deviceAuthMiddleware, deviceController.completeJob);
 
+const customerController = require('../controllers/customerController');
+
 // Secure Photo Download for Desktop Clients (require device authentication)
 router.get('/jobs/:jobId/download-photo', deviceAuthMiddleware, deviceController.downloadJobPhoto);
 router.get('/jobs/:jobId/photos/:photoIndex/download', deviceAuthMiddleware, deviceController.downloadJobPhoto);
+
+// Direct Photo Stream endpoints
+router.get('/photo-stream/*', customerController.getPhotoStream);
+router.get('/photo-stream', customerController.getPhotoStream);
+router.get('/stream/*', customerController.getPhotoStream);
+router.get('/stream', customerController.getPhotoStream);
 
 module.exports = router;

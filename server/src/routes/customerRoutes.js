@@ -7,8 +7,11 @@ const { uploadLimiter } = require('../middleware/rateLimiter');
 // Photo upload (Temporary Object Storage)
 router.post('/upload-photo', uploadLimiter, customerController.upload.single('photo'), customerController.uploadTempPhoto);
 
-// Photo stream
-router.get('/photo-stream/:storageKey', customerController.getPhotoStream);
+// Photo stream (supports multi-segment slash-separated storageKeys e.g. temp-photos/YYYY/MM/DD/...)
+router.get('/photo-stream/*', customerController.getPhotoStream);
+router.get('/photo-stream', customerController.getPhotoStream);
+router.get('/stream/*', customerController.getPhotoStream);
+router.get('/stream', customerController.getPhotoStream);
 
 // Service templates & pricing matrix
 router.get('/templates', customerController.getServiceTemplates);

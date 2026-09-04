@@ -132,6 +132,10 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 
+// Top-level photo stream endpoints
+const customerController = require('./controllers/customerController');
+app.get(['/api/v1/photo-stream/*', '/api/v1/photo-stream', '/api/v1/stream/*', '/api/v1/stream', '/photo-stream/*', '/photo-stream'], customerController.getPhotoStream);
+
 // Compatibility Alias Routes
 app.use('/api/v1/customer', customerRoutes);
 app.use('/api/v1/csc', cscRoutes);

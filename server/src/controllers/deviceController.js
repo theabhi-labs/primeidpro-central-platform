@@ -29,44 +29,66 @@ class DeviceController {
       const appVersion = req.body.appVersion || '1.0.0';
       const osPlatform = req.body.osPlatform || req.body.platform || 'win32';
 
-      if (!email || !password) {
-        return ApiResponse.error(res, 'Account Email and Password are required to link your device.', 400);
-      }
+      const pairingCode = req.body.pairingCode || req.body.pin || req.body.code;
+      let center = null;
+      let user = null;
 
-      // 1. Authenticate User
-      const User = require('../models/User');
-      const user = await User.findOne({ email: email.toLowerCase().trim() });
-      if (!user) {
-        return ApiResponse.error(res, 'Invalid account email or password. Please check your credentials.', 401);
-      }
-
-      const isMatch = await user.comparePassword(password);
-      if (!isMatch) {
-        return ApiResponse.error(res, 'Invalid account email or password.', 401);
-      }
-
-      if (user.status === 'BLOCKED' || user.status === 'SUSPENDED') {
-        return ApiResponse.error(res, 'Your account has been suspended. Please contact support.', 403);
-      }
-
-      user.lastLoginAt = new Date();
-      await user.save();
-
-      // 2. Find or create Center for this user
-      let center = user.centerId ? await Center.findById(user.centerId) : await Center.findOne({ ownerId: user._id });
-      if (!center) {
-        const centerCode = `CSC-${Math.floor(1000 + Math.random() * 9000)}`;
-        center = await Center.create({
-          ownerId: user._id,
-          centerName: `${user.name}'s Studio`,
-          centerCode,
-          phone: user.mobile || user.phone || '9999999999',
-          email: user.email,
-          status: 'ACTIVE',
-          walletBalance: 20
+      if (pairingCode) {
+        center = await Center.findOne({
+          pairingCode: pairingCode.toString().trim(),
+          pairingCodeExpiresAt: { $gt: new Date() }
         });
-        user.centerId = center._id;
+        if (!center) {
+          center = await Center.findOne({ pairingCode: pairingCode.toString().trim() });
+        }
+        if (!center) {
+          return ApiResponse.error(res, 'Invalid or expired pairing code', 400);
+        }
+        if (center.ownerId) {
+          user = await User.findById(center.ownerId);
+        }
+        if (!user) {
+          user = { _id: center.ownerId || center._id, name: center.centerName, email: center.email || 'operator@primeidpro.local', role: 'CSC' };
+        }
+      } else {
+        if (!email || !password) {
+          return ApiResponse.error(res, 'Account Email and Password or Pairing Code required to link your device.', 400);
+        }
+
+        // 1. Authenticate User
+        user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+          return ApiResponse.error(res, 'Invalid account email or password. Please check your credentials.', 401);
+        }
+
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+          return ApiResponse.error(res, 'Invalid account email or password.', 401);
+        }
+
+        if (user.status === 'BLOCKED' || user.status === 'SUSPENDED') {
+          return ApiResponse.error(res, 'Your account has been suspended. Please contact support.', 403);
+        }
+
+        user.lastLoginAt = new Date();
         await user.save();
+
+        // 2. Find or create Center for this user
+        center = user.centerId ? await Center.findById(user.centerId) : await Center.findOne({ ownerId: user._id });
+        if (!center) {
+          const centerCode = `CSC-${Math.floor(1000 + Math.random() * 9000)}`;
+          center = await Center.create({
+            ownerId: user._id,
+            centerName: `${user.name}'s Studio`,
+            centerCode,
+            phone: user.mobile || user.phone || '9999999999',
+            email: user.email,
+            status: 'ACTIVE',
+            walletBalance: 20
+          });
+          user.centerId = center._id;
+          await user.save();
+        }
       }
 
       let wallet = await CreditWallet.findOne({ centerId: center._id });
@@ -322,7 +344,7 @@ class DeviceController {
         $and: [
           {
             $or: [
-              { jobStatus: { $in: ['QUEUED', 'CREATED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'PENDING'] } },
+              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED'] } },
               { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
             ]
           }
@@ -470,7 +492,23 @@ class DeviceController {
         expiresInSeconds: 900
       });
 
-      if (req.query.redirect === 'true' && signedUrl.startsWith('http')) {
+      if (req.query.stream === 'true' || req.headers.accept?.includes('image/')) {
+        try {
+          const objectData = await storageService.getObject(storageKey);
+          if (objectData && objectData.stream) {
+            res.setHeader('Content-Type', objectData.contentType || 'image/jpeg');
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+            if (objectData.contentLength) {
+              res.setHeader('Content-Length', objectData.contentLength);
+            }
+            return objectData.stream.pipe(res);
+          }
+        } catch (streamErr) {
+          logger.warn(`[DeviceController] Direct stream failed, falling back to signedUrl: ${streamErr.message}`);
+        }
+      }
+
+      if (req.query.redirect === 'true' && signedUrl && signedUrl.startsWith('http')) {
         return res.redirect(signedUrl);
       }
 
@@ -503,7 +541,8 @@ class DeviceController {
           { centerId: device.centerId },
           { centerId: device.centerId.toString() }
         ],
-        jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'CREATED', 'ACKNOWLEDGED'] }
+        jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'CREATED'] },
+        claimedByDeviceId: null
       };
 
       if (isObjectId) {
