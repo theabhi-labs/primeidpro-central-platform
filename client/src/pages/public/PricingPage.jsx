@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Coins, ArrowRight, ShieldCheck, Zap, HelpCircle } from 'lucide-react';
+import { CheckCircle2, Coins, ArrowRight, ShieldCheck, Zap, HelpCircle, Sparkles } from 'lucide-react';
+import SEO from '../../components/SEO';
 
 export default function PricingPage() {
   const packages = [
@@ -68,6 +69,12 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen text-slate-100 selection:bg-indigo-500 selection:text-white">
+      <SEO
+        title="Prime ID Pro Pricing – Plans & License Options"
+        description="Transparent pay-per-photo pricing for Prime ID Pro. 1 Photo = 2 Credits (₹2). Credit packages starting from ₹100 with lifetime validity and zero monthly fees."
+        canonical="https://primeidpro.online/pricing"
+      />
+
       <section className="py-16 lg:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-4">
@@ -77,7 +84,7 @@ export default function PricingPage() {
             Transparent Pay-Per-Photo Credit Packages
           </h1>
           <p className="mt-4 text-base sm:text-lg text-slate-400">
-            Top up your studio wallet on demand. 1 Photo = 2 Credits (₹2). Keep 100% of the customer revenue you collect.
+            Top up your studio wallet on demand. 1 Photo = 2 Credits (₹2). Keep 100% of the customer revenue you collect at your counter.
           </p>
         </div>
 
@@ -98,6 +105,7 @@ export default function PricingPage() {
                 <h3 className="text-lg font-bold text-white">{pkg.name}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-black text-white">₹{pkg.price}</span>
+                  <span className="text-xs text-slate-400 font-medium">one-time</span>
                 </div>
                 {pkg.bonus ? (
                   <p className="text-xs text-emerald-400 font-bold mt-2">{pkg.bonus}</p>
@@ -115,14 +123,14 @@ export default function PricingPage() {
               </div>
 
               <Link
-                to="/register"
-                className={`mt-8 w-full py-3 text-center text-xs font-bold rounded-xl transition-all ${
+                to="/buy"
+                className={`mt-8 w-full py-3 text-center text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                   pkg.popular
                     ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30'
                     : 'bg-slate-800 hover:bg-slate-700 text-white'
                 }`}
               >
-                Top Up Now
+                Buy {pkg.name} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           ))}

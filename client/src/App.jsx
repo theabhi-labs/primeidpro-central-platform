@@ -12,6 +12,8 @@ import Sidebar from './components/Sidebar';
 import LandingPage from './pages/public/LandingPage';
 import FeaturesPage from './pages/public/FeaturesPage';
 import PricingPage from './pages/public/PricingPage';
+import BuyPage from './pages/public/BuyPage';
+import AboutPage from './pages/public/AboutPage';
 import DownloadPage from './pages/public/DownloadPage';
 import FaqPage from './pages/public/FaqPage';
 import ContactPage from './pages/public/ContactPage';
@@ -90,12 +92,17 @@ function AppRoutes() {
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/how-it-works" element={<FeaturesPage />} />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/buy" element={<BuyPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/download" element={<DownloadPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/terms-and-conditions" element={<TermsPage />} />
           <Route path="/refund" element={<RefundPolicyPage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
 
           {/* Customer Self-Service QR Kiosk & Order Wizard */}
           <Route path="/order" element={<CustomerOrderPage />} />

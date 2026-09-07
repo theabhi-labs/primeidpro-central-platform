@@ -62,10 +62,21 @@ const Navbar = () => {
         {/* Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center gap-1 text-sm font-medium text-slate-300">
           <Link
+            to="/"
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              isActive('/')
+                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-semibold'
+                : 'hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            Home
+          </Link>
+
+          <Link
             to="/features"
             className={`px-3 py-1.5 rounded-lg transition-all ${
               isActive('/features')
-                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-semibold'
                 : 'hover:text-white hover:bg-slate-800/60'
             }`}
           >
@@ -76,46 +87,57 @@ const Navbar = () => {
             to="/pricing"
             className={`px-3 py-1.5 rounded-lg transition-all ${
               isActive('/pricing')
-                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-semibold'
                 : 'hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            Pricing & Credits
+            Pricing
           </Link>
 
           <Link
-            to="/download"
-            className={`px-3 py-1.5 rounded-lg transition-all ${
-              isActive('/download')
-                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                : 'hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            Desktop App
-          </Link>
-
-          <Link
-            to="/order"
+            to="/buy"
             className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              isActive('/order')
+              isActive('/buy')
                 ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-semibold'
                 : 'text-indigo-300 hover:text-white hover:bg-indigo-950/40'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            Order Photos
+            <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
+            Buy Now
           </Link>
 
           <Link
-            to="/track"
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              isActive('/track')
-                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+            to="/about"
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              isActive('/about')
+                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-semibold'
                 : 'hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Search className="w-3.5 h-3.5 text-cyan-400" />
-            Track Order
+            About
+          </Link>
+
+          <Link
+            to="/contact"
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              isActive('/contact')
+                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-semibold'
+                : 'hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            Contact
+          </Link>
+
+          <Link
+            to="/download"
+            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+              isActive('/download')
+                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-semibold'
+                : 'hover:text-white hover:bg-slate-800/60 text-slate-400'
+            }`}
+          >
+            <Download className="w-3.5 h-3.5 text-slate-400" />
+            Download
           </Link>
         </nav>
 
@@ -195,6 +217,15 @@ const Navbar = () => {
         <div className="lg:hidden border-b border-slate-800 bg-slate-950/95 backdrop-blur-2xl px-4 py-5 space-y-3 animate-fade-in">
           <nav className="space-y-1">
             <Link
+              to="/"
+              onClick={closeMobile}
+              className={`block px-3.5 py-2 rounded-xl text-sm font-medium ${
+                isActive('/') ? 'bg-indigo-600/20 text-indigo-300' : 'text-slate-300 hover:bg-slate-900'
+              }`}
+            >
+              Home
+            </Link>
+            <Link
               to="/features"
               onClick={closeMobile}
               className={`block px-3.5 py-2 rounded-xl text-sm font-medium ${
@@ -210,7 +241,34 @@ const Navbar = () => {
                 isActive('/pricing') ? 'bg-indigo-600/20 text-indigo-300' : 'text-slate-300 hover:bg-slate-900'
               }`}
             >
-              Pricing & Credits
+              Pricing
+            </Link>
+            <Link
+              to="/buy"
+              onClick={closeMobile}
+              className={`block px-3.5 py-2 rounded-xl text-sm font-medium ${
+                isActive('/buy') ? 'bg-indigo-600/20 text-indigo-300' : 'text-indigo-400 hover:bg-slate-900 font-semibold'
+              }`}
+            >
+              Buy Now
+            </Link>
+            <Link
+              to="/about"
+              onClick={closeMobile}
+              className={`block px-3.5 py-2 rounded-xl text-sm font-medium ${
+                isActive('/about') ? 'bg-indigo-600/20 text-indigo-300' : 'text-slate-300 hover:bg-slate-900'
+              }`}
+            >
+              About
+            </Link>
+            <Link
+              to="/contact"
+              onClick={closeMobile}
+              className={`block px-3.5 py-2 rounded-xl text-sm font-medium ${
+                isActive('/contact') ? 'bg-indigo-600/20 text-indigo-300' : 'text-slate-300 hover:bg-slate-900'
+              }`}
+            >
+              Contact
             </Link>
             <Link
               to="/download"
@@ -220,24 +278,6 @@ const Navbar = () => {
               }`}
             >
               Windows Desktop App
-            </Link>
-            <Link
-              to="/order"
-              onClick={closeMobile}
-              className={`block px-3.5 py-2 rounded-xl text-sm font-medium ${
-                isActive('/order') ? 'bg-indigo-600/20 text-indigo-300' : 'text-indigo-400 hover:bg-slate-900'
-              }`}
-            >
-              Order Photos Now
-            </Link>
-            <Link
-              to="/track"
-              onClick={closeMobile}
-              className={`block px-3.5 py-2 rounded-xl text-sm font-medium ${
-                isActive('/track') ? 'bg-indigo-600/20 text-indigo-300' : 'text-slate-300 hover:bg-slate-900'
-              }`}
-            >
-              Track Order Status
             </Link>
             <Link
               to="/faq"

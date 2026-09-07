@@ -1,26 +1,31 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, HelpCircle, ArrowRight, Sparkles } from 'lucide-react';
+import SEO from '../../components/SEO';
 
 export default function FaqPage() {
   const [openFaq, setOpenFaq] = useState(null);
 
   const faqs = [
     {
-      q: 'What is Prime ID Pro and how does it connect my shop to customers?',
-      a: 'Prime ID Pro is an integrated photo processing and high-speed desktop printing ecosystem designed for CSC centers, cyber cafes, photocopy shops, and studio operators across India. It connects mobile customer kiosks to an offline-capable Windows desktop application via cloud sync, eliminating manual photo transfer friction.'
+      q: 'What is Prime ID Pro and how does it work for CSC & Cyber Cafe operators?',
+      a: 'Prime ID Pro is an integrated photo processing and high-speed desktop printing ecosystem. You place your personalized QR code at your shop counter. Customers scan the QR, upload photos directly from their mobile browser, choose standard photo sizes, and complete payment. The photos instantly sync to your Windows desktop PC without the friction of WhatsApp or email, where our local AI creates 300 DPI print grids in one click.'
+    },
+    {
+      q: 'Does the Prime ID Pro Windows desktop app work offline without internet?',
+      a: 'Yes. The Prime ID Pro desktop application runs 100% locally on your Windows PC. Local AI face landmark detection, Rembg background removal, 300 DPI passport/visa layout rendering, and native printer driver communication all run completely offline.'
     },
     {
       q: 'How does the Credit System and wallet deduction work?',
-      a: 'Prime ID Pro charges 2 credits per photo printed (1 photo = 2 credits = ₹2). There are no recurring monthly subscription fees. Operators purchase credit packages via UPI / Razorpay and use them on demand as customers order. Balance deductions occur upon print job confirmation.'
+      a: 'Prime ID Pro operates on a pay-as-you-grow model: 1 photo print = 2 credits (₹2). There are zero mandatory monthly subscriptions. Operators top up credits via Razorpay UPI and use them on demand. Balance deductions occur atomically upon print confirmation.'
     },
     {
       q: 'Can multiple photos or family members be processed in a single order?',
-      a: 'Yes. Customers can select and upload 1, 2, 3, 5, 10 or 20+ photos in a single order. The desktop client batches them seamlessly and creates multi-photo print sheets with standard cut guides.'
+      a: 'Yes. Customers can select and upload 1, 2, 3, 5, 10 or 20+ photos in a single order. The desktop client batches them seamlessly and creates multi-photo print sheets (4x6, 5x7, A4) with standard cut guides.'
     },
     {
-      q: 'How are customer photos kept secure and private?',
-      a: 'Customer photos are temporarily held in encrypted object storage and are permanently auto-purged exactly 10 minutes after the desktop app confirms print completion. Photos are never stored permanently in database tables or shared.'
+      q: 'How is customer photo privacy and security guaranteed?',
+      a: 'We adhere to a strict 10-Minute Auto-Purge policy. Exactly 10 minutes after a print job is confirmed by the desktop application, the temporary photo binaries are permanently wiped from cloud storage. Customer photos are never permanently stored or shared.'
     },
     {
       q: 'How do I pair my desktop computer with my studio account?',
@@ -28,12 +33,18 @@ export default function FaqPage() {
     },
     {
       q: 'Which printers and paper sizes are supported?',
-      a: 'All standard dye-sublimation and inkjet printers from DNP, Canon Selphy, Epson, Brother, and HP on 4x6, 5x7, and A4 photo paper are natively supported.'
+      a: 'All standard Windows dye-sublimation and inkjet printers from DNP (DS-RX1HS, DS620), Canon (Selphy CP1300/1500, Pixma series), Epson (L805, L8050, L3250), Brother, and HP on 4x6, 5x7, and A4 photo paper are natively supported.'
     }
   ];
 
   return (
     <div className="min-h-screen text-slate-100 selection:bg-indigo-500 selection:text-white">
+      <SEO
+        title="Help & FAQs – Prime ID Pro Photo Processing"
+        description="Frequently asked questions about Prime ID Pro desktop software, printer pairing, credit wallet rules, offline AI capabilities, and customer privacy."
+        canonical="https://primeidpro.online/faq"
+      />
+
       <section className="py-16 lg:py-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-4">

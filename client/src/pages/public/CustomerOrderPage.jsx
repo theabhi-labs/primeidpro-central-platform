@@ -18,6 +18,7 @@ import {
 import { customerService, paymentService } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import Button from '../../components/Button';
+import SEO from '../../components/SEO';
 
 export default function CustomerOrderPage() {
   const { slug, token } = useParams();
@@ -343,6 +344,12 @@ export default function CustomerOrderPage() {
   // ==========================================
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
+      <SEO
+        title="Order Photos – Prime ID Pro QR Kiosk"
+        description="Self-service instant photo ordering. Upload portrait photos, select standard passport/visa sizes, and send directly to local studio printer."
+        canonical="https://primeidpro.online/order"
+      />
+
       {/* Studio Header Card */}
       <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/80 px-4 py-5">
         <div className="max-w-md mx-auto flex items-center gap-3">

@@ -5,6 +5,7 @@ import { customerService } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import LiveTracker from '../../components/LiveTracker';
 import Button from '../../components/Button';
+import SEO from '../../components/SEO';
 
 const OrderTrackingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,6 +74,12 @@ const OrderTrackingPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 min-h-screen">
+      <SEO
+        title="Track Order Status – Prime ID Pro"
+        description="Real-time order tracking for your passport photo print jobs. Check AI cropping, layout composition, and physical print queue progression."
+        canonical="https://primeidpro.online/track"
+      />
+
       {/* Search Header */}
       <div className="mb-8 text-center space-y-3">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">

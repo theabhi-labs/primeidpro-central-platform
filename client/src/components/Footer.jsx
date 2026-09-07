@@ -34,88 +34,93 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Customer Solutions */}
+        {/* Product & Solutions */}
         <div>
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Customer Services</h4>
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Product &amp; Pricing</h4>
           <ul className="space-y-2.5 text-xs">
             <li>
-              <Link to="/order" className="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                Instant Photo Order
-              </Link>
-            </li>
-            <li>
-              <Link to="/track" className="hover:text-indigo-400 transition-colors">
-                Track Order Status
+              <Link to="/features" className="hover:text-indigo-400 transition-colors">
+                Software Features
               </Link>
             </li>
             <li>
               <Link to="/pricing" className="hover:text-indigo-400 transition-colors">
-                Photo Sizes &amp; Specifications
+                Pricing &amp; Plans
               </Link>
             </li>
             <li>
-              <Link to="/features" className="hover:text-indigo-400 transition-colors">
-                Supported ID Standards
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* CSC Partners & Operators */}
-        <div>
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">CSC Partners &amp; Tech</h4>
-          <ul className="space-y-2.5 text-xs">
-            <li>
-              <Link to="/login" className="hover:text-indigo-400 transition-colors">
-                CSC Operator Sign In
-              </Link>
-            </li>
-            <li>
-              <Link to="/register" className="hover:text-indigo-400 transition-colors">
-                Register New Studio
+              <Link to="/buy" className="hover:text-indigo-400 transition-colors flex items-center gap-1 font-semibold text-indigo-300">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                Buy Prime ID Pro
               </Link>
             </li>
             <li>
               <Link to="/download" className="hover:text-indigo-400 transition-colors">
-                Windows Desktop App
+                Download Desktop App
               </Link>
             </li>
             <li>
-              <Link to="/pricing" className="hover:text-indigo-400 transition-colors">
-                Credit Pricing Matrix
-              </Link>
-            </li>
-            <li>
-              <Link to="/faq" className="hover:text-indigo-400 transition-colors">
-                Operator Help &amp; FAQs
+              <Link to="/order" className="hover:text-indigo-400 transition-colors">
+                Customer Kiosk Order
               </Link>
             </li>
           </ul>
         </div>
 
-        {/* Legal & Privacy Guarantee */}
+        {/* Company & Support */}
         <div>
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Legal &amp; Privacy</h4>
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Company &amp; Support</h4>
+          <ul className="space-y-2.5 text-xs">
+            <li>
+              <Link to="/about" className="hover:text-indigo-400 transition-colors">
+                About Us
+              </Link>
+            </li>
+            <li>
+              <Link to="/contact" className="hover:text-indigo-400 transition-colors">
+                Contact Us
+              </Link>
+            </li>
+            <li>
+              <Link to="/faq" className="hover:text-indigo-400 transition-colors">
+                Help &amp; FAQs
+              </Link>
+            </li>
+            <li>
+              <Link to="/login" className="hover:text-indigo-400 transition-colors">
+                Operator Sign In
+              </Link>
+            </li>
+            <li>
+              <Link to="/register" className="hover:text-indigo-400 transition-colors">
+                Register Studio
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        {/* Legal & Policy Pages */}
+        <div>
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Legal &amp; Policies</h4>
           <ul className="space-y-2.5 text-xs mb-4">
             <li>
-              <Link to="/privacy" className="hover:text-indigo-400 transition-colors">
-                Privacy Policy (10-Min Purge)
+              <Link to="/privacy-policy" className="hover:text-indigo-400 transition-colors">
+                Privacy Policy
               </Link>
             </li>
             <li>
-              <Link to="/terms" className="hover:text-indigo-400 transition-colors">
-                Terms of Service
+              <Link to="/terms-and-conditions" className="hover:text-indigo-400 transition-colors">
+                Terms &amp; Conditions
               </Link>
             </li>
             <li>
-              <Link to="/refund" className="hover:text-indigo-400 transition-colors">
+              <Link to="/refund-policy" className="hover:text-indigo-400 transition-colors">
                 Refund &amp; Cancellation
               </Link>
             </li>
             <li>
               <Link to="/contact" className="hover:text-indigo-400 transition-colors">
-                Contact &amp; Support
+                Support &amp; Grievance
               </Link>
             </li>
           </ul>

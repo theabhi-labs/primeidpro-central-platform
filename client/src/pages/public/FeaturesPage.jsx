@@ -16,61 +16,90 @@ import {
   QrCode,
   Lock,
   Scissors,
-  FileCheck
+  FileCheck,
+  RefreshCw,
+  Sliders,
+  CreditCard,
+  Headphones
 } from 'lucide-react';
+import SEO from '../../components/SEO';
 
 export default function FeaturesPage() {
   const featureList = [
     {
+      title: 'Bulk Photo Processing',
+      desc: 'Process 1, 5, 10, or 20+ photos simultaneously with automatic proportion scaling, rotation calibration, and orientation alignment for multi-member family orders.',
+      badge: 'Batch Processing',
+      icon: Layers
+    },
+    {
+      title: 'Passport-Size & Visa Photo Preparation',
+      desc: 'Automatic face landmark detection and biometric proportion cropping complying with Indian Passport (35x45mm), US Visa (2x2 inch), Schengen, and Stamp size standards.',
+      badge: 'Biometric AI',
+      icon: Cpu
+    },
+    {
+      title: 'Multiple Photo Sheet Printing',
+      desc: 'Composes multi-photo grids on 4x6, 5x7, and A4 photo paper sheets with crisp cutting guides and custom border margins for easy manual cutting.',
+      badge: 'Smart Layouts',
+      icon: Scissors
+    },
+    {
       title: 'Customer Self-Service QR Kiosk',
-      desc: 'Customers scan a QR code placed on your shop desk or counter using any smartphone. No mobile app download required. Seamless mobile camera and gallery upload with instant preview.',
+      desc: 'Customers scan a QR code placed on your shop desk using any smartphone. No mobile app download needed. Direct mobile camera and gallery upload with instant preview.',
       badge: 'Zero Waiting Time',
       icon: QrCode
     },
     {
-      title: 'AI Face Mesh & Biometric Alignment',
-      desc: 'Automatic detection of facial landmarks, pupil distance, and chin-to-crown ratio complying with ICAO, Indian Passport (35x45mm), US Visa (2x2 inch), and PVC ID standards.',
+      title: 'Restore Mode & Background Removal',
+      desc: 'Embedded local Rembg AI engine isolates human portraits and replaces cluttered home backgrounds with studio white, light blue, or custom solid backdrops in seconds.',
       badge: '100% Offline AI',
-      icon: Cpu
-    },
-    {
-      title: 'Rembg Local Background Removal',
-      desc: 'High precision background isolation running natively on your Windows PC. Replace complex, noisy home backgrounds with studio white, light blue, or custom solid colors in under 2 seconds.',
-      badge: 'Zero Cloud Lag',
       icon: Sparkles
     },
     {
-      title: '300 DPI Native Windows Direct Printing',
-      desc: 'Bypasses slow, generic Windows print dialogue boxes to transmit raw 300 DPI bitmaps directly to DNP, Canon Selphy, Epson L805/L8050, Brother, and all thermal/inkjet photo printers.',
-      badge: 'Ultra Crisp',
-      icon: Printer
+      title: 'ID Card Preparation',
+      desc: 'Quickly prepare and format standardized citizen portrait photographs for PVC smart cards, student admission badges, and corporate credentials.',
+      badge: 'PVC & ID Cards',
+      icon: FileCheck
     },
     {
-      title: 'Multi-Photo Batch Upload & Layouts',
-      desc: 'Customers can upload 1, 2, 3, 5, 10 or 20+ photos in a single order. Automatically arranges multi-photo sheets (4x6, 5x7, A4) with cut lines and margins.',
-      badge: 'Family & Group Ready',
-      icon: Layers
+      title: 'Photo Processing Workflows',
+      desc: 'Seamless pipeline from counter QR upload to 1-click Windows desktop printing, eliminating messy file sharing over WhatsApp, Bluetooth, or email.',
+      badge: 'Automated Pipeline',
+      icon: Zap
     },
     {
-      title: '10-Minute Automatic Privacy Cleanup',
-      desc: 'Ensures stringent customer privacy. All temporary photos uploaded to cloud object storage are purged automatically 10 minutes post-printing. Zero permanent photo storage.',
-      badge: '100% Compliant',
-      icon: Lock
+      title: 'Desktop Software Licensing & Pairing',
+      desc: 'Lightweight standalone Windows installer with 6-digit terminal pairing. Flexible pay-as-you-grow credit licensing at ₹2 per photo with lifetime validity.',
+      badge: 'No Subscription',
+      icon: CreditCard
+    },
+    {
+      title: 'Product-Related Support & Diagnostics',
+      desc: 'Integrated printer driver diagnostics, real-time socket communication, and dedicated technical helpdesk for studio hardware configuration.',
+      badge: 'Dedicated Help',
+      icon: Headphones
     }
   ];
 
   return (
     <div className="min-h-screen text-slate-100 selection:bg-indigo-500 selection:text-white">
+      <SEO
+        title="Prime ID Pro Features – Bulk Photo, QR Scanner & More"
+        description="Explore Prime ID Pro features: Bulk photo processing, passport photo preparation, QR kiosk scanning, local AI background removal, and 300 DPI direct printing."
+        canonical="https://primeidpro.online/features"
+      />
+
       <section className="py-16 lg:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-4">
-            <Zap className="w-3.5 h-3.5" /> Core Technology
+            <Zap className="w-3.5 h-3.5" /> Comprehensive Feature Suite
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
             Engineered For High-Speed CSC &amp; Cyber Cafe Workflows
           </h1>
           <p className="mt-4 text-base sm:text-lg text-slate-400">
-            Discover why digital center operators across India rely on Prime ID Pro for rapid passport photo processing and direct printing.
+            Discover why digital center operators across India rely on Prime ID Pro for rapid passport photo processing, multi-photo layouts, and direct printer streaming.
           </p>
         </div>
 
@@ -101,23 +130,23 @@ export default function FeaturesPage() {
 
         <div className="mt-20 bg-gradient-to-r from-indigo-950/80 via-slate-900/90 to-indigo-950/80 border border-indigo-500/30 rounded-3xl p-10 sm:p-12 text-center relative overflow-hidden backdrop-blur-xl">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Experience Fast Processing Today
+            Experience High-Speed Photo Processing Today
           </h2>
           <p className="mt-3 text-slate-300 max-w-xl mx-auto text-sm">
             Sign up your CSC / Cyber Cafe center in under 2 minutes and start printing with instant starter credits.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
             <Link
-              to="/register"
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all"
+              to="/buy"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm"
             >
-              Start Your Center <ArrowRight className="w-4 h-4" />
+              Buy Software &amp; Credits <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               to="/download"
-              className="inline-flex items-center gap-2 px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition-all text-sm"
             >
-              Download Windows Client
+              Download Windows App
             </Link>
           </div>
         </div>

@@ -25,6 +25,7 @@ import {
   Sliders,
   Check
 } from 'lucide-react';
+import SEO from '../../components/SEO';
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState(null);
@@ -164,6 +165,12 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen text-slate-100 selection:bg-indigo-500 selection:text-white">
+      <SEO
+        title="Prime ID Pro – Photo Processing & Printing Software"
+        description="Prime ID Pro is an automated photo processing and high-speed desktop printing software for CSC centers, cyber cafes, photo studios, and printing businesses."
+        canonical="https://primeidpro.online/"
+      />
+
       {/* 1. HERO SECTION */}
       <section className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden">
         {/* Subtle Ambient Glows */}

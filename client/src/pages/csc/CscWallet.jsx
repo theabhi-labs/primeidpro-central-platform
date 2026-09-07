@@ -158,21 +158,21 @@ const CscWallet = () => {
             ₹{currentBalance}
           </div>
           <div className="text-xs text-slate-400">
-            Deducted automatically at ₹5 per passport print job.
+            Deducted automatically at ₹2 (2 credits) per photo print job.
           </div>
         </div>
 
         <StatCard
-          title="Avg. Cost Per Print"
-          value="₹5.00"
-          subtitle="Fixed platform fee per job"
+          title="Avg. Cost Per Photo"
+          value="₹2.00"
+          subtitle="Fixed platform fee (2 credits)"
           icon={Coins}
           color="indigo"
         />
 
         <StatCard
           title="Print Capacity"
-          value={`${Math.floor(currentBalance / 5)} Jobs`}
+          value={`${Math.floor(currentBalance / 2)} Photos`}
           subtitle="Prints available with balance"
           icon={CreditCard}
           color="cyan"

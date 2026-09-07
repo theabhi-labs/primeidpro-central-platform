@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Allow: /features
+Allow: /pricing
+Allow: /buy
+Allow: /about
+Allow: /contact
+Allow: /privacy-policy
+Allow: /terms-and-conditions
+Allow: /refund-policy
+Allow: /download
+Allow: /faq
+
+Disallow: /admin/
+Disallow: /csc/
+Disallow: /api/
+
+Sitemap: https://primeidpro.online/sitemap.xml
