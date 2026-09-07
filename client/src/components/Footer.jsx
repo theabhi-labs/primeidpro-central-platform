@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Lock, Zap, Printer, Sparkles, Server, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, Zap, Printer, Sparkles, Server, CheckCircle2, Linkedin } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -82,19 +82,33 @@ const Footer = () => {
               </Link>
             </li>
             <li>
-              <Link to="/faq" className="hover:text-indigo-400 transition-colors">
-                Help &amp; FAQs
-              </Link>
+              <a
+                href="https://www.linkedin.com/in/abhishek-yadav-rootabhi/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-blue-400 transition-colors flex items-center gap-1.5 text-blue-300"
+              >
+                <Linkedin className="w-3.5 h-3.5 text-blue-400" />
+                Founder LinkedIn
+              </a>
             </li>
             <li>
-              <Link to="/login" className="hover:text-indigo-400 transition-colors">
-                Operator Sign In
-              </Link>
+              <a
+                href="https://wa.me/919831665184"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-emerald-400 transition-colors text-emerald-300"
+              >
+                WhatsApp: +91 9831665184
+              </a>
             </li>
             <li>
-              <Link to="/register" className="hover:text-indigo-400 transition-colors">
-                Register Studio
-              </Link>
+              <a
+                href="mailto:primeidpro@gmail.com"
+                className="hover:text-indigo-400 transition-colors font-mono"
+              >
+                primeidpro@gmail.com
+              </a>
             </li>
           </ul>
         </div>

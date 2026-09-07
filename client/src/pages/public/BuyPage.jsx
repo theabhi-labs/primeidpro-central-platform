@@ -282,11 +282,15 @@ export default function BuyPage() {
             <div className="space-y-2.5 pt-2 text-xs">
               <div className="flex items-center gap-2 text-slate-300">
                 <span className="font-semibold text-white">Email:</span>
-                <span className="font-mono text-indigo-400">support@primeidpro.online</span>
+                <a href="mailto:primeidpro@gmail.com" className="font-mono text-indigo-400 hover:underline">
+                  primeidpro@gmail.com
+                </a>
               </div>
               <div className="flex items-center gap-2 text-slate-300">
-                <span className="font-semibold text-white">Helpline:</span>
-                <span>+91 98765 43210</span>
+                <span className="font-semibold text-white">WhatsApp Helpline:</span>
+                <a href="https://wa.me/919831665184" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 font-semibold">
+                  +91 9831665184 (WhatsApp Only)
+                </a>
               </div>
               <div className="flex items-center gap-2 text-slate-300">
                 <span className="font-semibold text-white">Operating Hours:</span>

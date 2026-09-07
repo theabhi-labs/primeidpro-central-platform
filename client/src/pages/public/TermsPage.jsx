@@ -94,8 +94,8 @@ export default function TermsPage() {
             </p>
             <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs space-y-1">
               <div className="text-white font-bold">Prime ID Pro Legal &amp; Support Team</div>
-              <div className="text-slate-400">Email: <span className="font-mono text-indigo-400">support@primeidpro.online</span></div>
-              <div className="text-slate-400">Helpline: +91 98765 43210</div>
+              <div className="text-slate-400">Email: <span className="font-mono text-indigo-400">primeidpro@gmail.com</span></div>
+              <div className="text-slate-400">WhatsApp Helpline: <span className="text-slate-200">+91 9831665184 (WhatsApp Only)</span></div>
               <div className="text-slate-400">Website: https://primeidpro.online</div>
             </div>
           </div>

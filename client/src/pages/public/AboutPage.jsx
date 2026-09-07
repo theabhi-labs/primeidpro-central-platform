@@ -14,7 +14,9 @@ import {
   Lock,
   Headphones,
   QrCode,
-  Laptop
+  Laptop,
+  Linkedin,
+  Mail
 } from 'lucide-react';
 import SEO from '../../components/SEO';
 
@@ -219,6 +221,33 @@ export default function AboutPage() {
                 <p className="text-xs text-slate-400 leading-relaxed">{srv.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Leadership & Founder Section */}
+        <div className="mb-20 p-8 sm:p-10 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center sm:text-left">
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Leadership &amp; Engineering</span>
+            <h3 className="text-xl sm:text-2xl font-bold text-white">Abhishek Yadav (Founder &amp; Lead Architect)</h3>
+            <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
+              Leading the development of Prime ID Pro's high-speed image processing engine and secure cloud synchronization platform.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <a
+              href="https://www.linkedin.com/in/abhishek-yadav-rootabhi/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2"
+            >
+              <Linkedin className="w-4 h-4" /> Connect on LinkedIn
+            </a>
+            <a
+              href="mailto:primeidpro@gmail.com"
+              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center gap-1.5"
+            >
+              <Mail className="w-4 h-4" /> Email
+            </a>
           </div>
         </div>
 

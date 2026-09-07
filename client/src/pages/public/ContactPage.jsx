@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Send, CheckCircle2, Headphones, Clock, HelpCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CheckCircle2, Headphones, Clock, HelpCircle, Linkedin } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import SEO from '../../components/SEO';
 
@@ -57,26 +57,62 @@ export default function ContactPage() {
             </p>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
+              {/* Email */}
+              <a
+                href="mailto:primeidpro@gmail.com"
+                className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/40 transition-all group"
+              >
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:scale-105 transition-transform">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="text-xs text-slate-500">Official Email Support</div>
-                  <div className="text-sm font-bold text-white font-mono">support@primeidpro.online</div>
+                  <div className="text-sm font-bold text-white font-mono group-hover:text-indigo-300 transition-colors">
+                    primeidpro@gmail.com
+                  </div>
                 </div>
-              </div>
+              </a>
 
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">
+              {/* WhatsApp Support */}
+              <a
+                href="https://wa.me/919831665184"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/40 transition-all group"
+              >
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Partner &amp; Sales Helpline</div>
-                  <div className="text-sm font-bold text-white">+91 98765 43210</div>
+                  <div className="text-xs text-slate-500">Mobile Support (WhatsApp Only)</div>
+                  <div className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors flex items-center gap-2">
+                    <span>+91 9831665184</span>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      WhatsApp Only
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </a>
 
+              {/* LinkedIn */}
+              <a
+                href="https://www.linkedin.com/in/abhishek-yadav-rootabhi/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-blue-500/40 transition-all group"
+              >
+                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 group-hover:scale-105 transition-transform">
+                  <Linkedin className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">LinkedIn Profile (Founder)</div>
+                  <div className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                    Abhishek Yadav (rootabhi)
+                  </div>
+                </div>
+              </a>
+
+              {/* Operating Support Hours */}
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
                 <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400">
                   <Clock className="w-5 h-5" />
@@ -87,6 +123,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
+              {/* Web Platform Portal */}
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
                 <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400">
                   <MapPin className="w-5 h-5" />
