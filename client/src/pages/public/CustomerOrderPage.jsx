@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
   Camera,
+  Image as ImageIcon,
   CheckCircle2,
   Sparkles,
   Store,
@@ -13,7 +14,9 @@ import {
   Plus,
   Minus,
   ArrowRight,
-  RefreshCw
+  RefreshCw,
+  Upload,
+  FolderOpen
 } from 'lucide-react';
 import { customerService, paymentService } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
@@ -24,7 +27,10 @@ export default function CustomerOrderPage() {
   const { slug, token } = useParams();
   const [searchParams] = useSearchParams();
   const { success, error } = useToast();
-  const fileInputRef = useRef(null);
+  
+  // Separate refs for Camera vs Gallery Picker
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -128,6 +134,8 @@ export default function CustomerOrderPage() {
       error('Upload failed: ' + (err.formattedMessage || err.message));
     } finally {
       setIsUploadingPhoto(false);
+      // Reset input value so same photo can be re-selected if needed
+      e.target.value = '';
     }
   };
 
@@ -151,7 +159,7 @@ export default function CustomerOrderPage() {
     }
     if (!uploadedStorageKey && !uploadedPhotoUrl) {
       error('Please select or take a photo first.');
-      if (fileInputRef.current) fileInputRef.current.click();
+      galleryInputRef.current?.click();
       return;
     }
 
@@ -191,7 +199,7 @@ export default function CustomerOrderPage() {
           totalPrice,
           paymentMethod: 'CASH',
         });
-        success('🎉 Order sent directly to Studio Counter!');
+        success('Order sent directly to Studio Counter!');
         return;
       }
 
@@ -223,7 +231,7 @@ export default function CustomerOrderPage() {
                 totalPrice,
                 paymentMethod: 'ONLINE',
               });
-              success('🎉 Payment verified! Photo sent to studio desktop.');
+              success('Payment verified! Photo sent to studio desktop.');
             } catch (verErr) {
               error('Payment verification: ' + (verErr.formattedMessage || verErr.message));
             }
@@ -290,7 +298,7 @@ export default function CustomerOrderPage() {
 
           <div className="space-y-2">
             <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full uppercase tracking-wider border border-emerald-500/30">
-              ⚡ Sent To Studio PC
+              ✓ Sent To Studio PC
             </span>
             <h2 className="text-2xl font-black text-white">Order Received!</h2>
             <p className="text-xs text-slate-400">
@@ -314,7 +322,7 @@ export default function CustomerOrderPage() {
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-400">Payment:</span>
               <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${completedOrder.paymentMethod === 'CASH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                {completedOrder.paymentMethod === 'CASH' ? '💵 Pay Cash at Counter' : '✅ Paid Online'}
+                {completedOrder.paymentMethod === 'CASH' ? '💵 Pay Cash at Counter' : '💳 Paid Online'}
               </span>
             </div>
           </div>
@@ -345,7 +353,7 @@ export default function CustomerOrderPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
       <SEO
-        title="Order Photos – Prime ID Pro QR Kiosk"
+        title="Order Photos • Prime ID Pro QR Kiosk"
         description="Self-service instant photo ordering. Upload portrait photos, select standard passport/visa sizes, and send directly to local studio printer."
         canonical="https://primeidpro.online/order"
       />
@@ -374,12 +382,21 @@ export default function CustomerOrderPage() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-5 space-y-4">
-        {/* Hidden File Input */}
+        {/* Hidden Camera Input (Mobile Camera) */}
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="user"
+          onChange={handlePhotoSelect}
+          className="hidden"
+        />
+
+        {/* Hidden Gallery / File Picker Input (Mobile Gallery & Files) */}
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
           onChange={handlePhotoSelect}
           className="hidden"
         />
@@ -391,7 +408,7 @@ export default function CustomerOrderPage() {
               <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
                 1
               </div>
-              <h2 className="text-sm font-extrabold text-white">Upload Your Photo</h2>
+              <h2 className="text-sm font-extrabold text-white">Select or Take Photo</h2>
             </div>
             <span className="text-[11px] font-medium text-cyan-400 flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> Auto AI Clean
@@ -399,16 +416,52 @@ export default function CustomerOrderPage() {
           </div>
 
           {!photoPreview ? (
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-700 hover:border-cyan-500 bg-slate-950/60 hover:bg-slate-950 rounded-2xl p-7 text-center cursor-pointer transition-all group flex flex-col items-center justify-center space-y-3"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                <Camera className="w-8 h-8" />
+            <div className="space-y-3">
+              {/* Dual Action Selection: Camera vs Gallery */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* 1. Camera Option */}
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="p-5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2.5 text-center group shadow-lg shadow-cyan-950/20"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                    <Camera className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-white group-hover:text-cyan-300 transition-colors">
+                      Take Photo
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      Camera / Selfie
+                    </div>
+                  </div>
+                </button>
+
+                {/* 2. Gallery / File Upload Option */}
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="p-5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-dashed border-blue-500/40 hover:border-blue-400 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2.5 text-center group shadow-lg shadow-blue-950/20"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                    <FolderOpen className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-white group-hover:text-blue-300 transition-colors">
+                      Choose Photo
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      Gallery / Files
+                    </div>
+                  </div>
+                </button>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm font-bold text-white">Tap to Take or Select Photo</p>
-                <p className="text-xs text-slate-400">Camera or Gallery (Selfie / Portrait)</p>
+
+              <div className="text-center">
+                <p className="text-[11px] text-slate-400">
+                  Select an existing photo from gallery or take a fresh portrait photo
+                </p>
               </div>
             </div>
           ) : (
@@ -427,18 +480,30 @@ export default function CustomerOrderPage() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Photo Ready</span>
+              {/* Options to Change Photo */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 bg-slate-950/60 p-2.5 rounded-2xl border border-slate-800">
+                <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 font-bold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>Photo Selected</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center gap-1.5"
-                >
-                  <RefreshCw className="w-3 h-3" /> Change Photo
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Retake</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5 text-blue-400" />
+                    <span>From Gallery</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -593,7 +658,7 @@ export default function CustomerOrderPage() {
           ) : (
             <>
               <Sparkles className="w-5 h-5" />
-              <span>Print {copies} Photos — ₹{totalPrice}</span>
+              <span>Print {copies} Photos • ₹{totalPrice}</span>
               <ArrowRight className="w-5 h-5 ml-1" />
             </>
           )}
