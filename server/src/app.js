@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -50,7 +50,7 @@ app.use(
   })
 );
 
-// CORS Hardening — Strict Origin Whitelisting
+// CORS Hardening â€” Strict Origin Whitelisting
 const allowedOrigins = [
   env.CLIENT_URL,
   'http://localhost:5173',
@@ -106,7 +106,7 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
-// NoSQL Injection Protection — Sanitize req.body, req.query, req.params
+// NoSQL Injection Protection â€” Sanitize req.body, req.query, req.params
 app.use(
   mongoSanitize({
     replaceWith: '_'
@@ -141,6 +141,17 @@ app.use('/api/v1/customer', customerRoutes);
 app.use('/api/v1/csc', cscRoutes);
 app.use('/api/v1/desktop', desktopRoutes);
 
+// Serve React SPA client static assets if present
+const path = require('path');
+const fs = require('fs');
+const clientDist = path.join(__dirname, '../../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get(['/cards/fill/*', '/cards/fill', '/cards/*', '/order/*', '/kiosk/*', '/track/*'], (req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 // Public Web Route Redirects (in case customer scans QR pointing to backend API domain)
 app.get([
   '/kiosk/:slug',
@@ -149,10 +160,14 @@ app.get([
   '/order',
   '/track/:orderId',
   '/track',
+  '/cards/fill/:token',
+  '/cards/fill',
   '/api/v1/order/:token',
   '/api/v1/order',
   '/api/v1/kiosk/:slug',
-  '/api/v1/kiosk'
+  '/api/v1/kiosk',
+  '/api/v1/cards/fill/:token',
+  '/api/v1/cards/fill'
 ], (req, res) => {
   let clientBase = 'https://www.primeidpro.online';
   if (env.CLIENT_URL && !env.CLIENT_URL.includes('api.')) {
@@ -182,3 +197,4 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 module.exports = app;
+

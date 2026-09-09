@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -21,6 +21,7 @@ import PrivacyPage from './pages/public/PrivacyPage';
 import TermsPage from './pages/public/TermsPage';
 import RefundPolicyPage from './pages/public/RefundPolicyPage';
 import CustomerOrderPage from './pages/public/CustomerOrderPage';
+import SchoolCardCollectionPage from './pages/public/SchoolCardCollectionPage';
 import OrderTrackingPage from './pages/public/OrderTrackingPage';
 
 // CSC Portal Pages
@@ -108,6 +109,8 @@ function AppRoutes() {
           <Route path="/order" element={<CustomerOrderPage />} />
           <Route path="/order/:token" element={<CustomerOrderPage />} />
           <Route path="/kiosk/:slug" element={<CustomerOrderPage />} />
+          <Route path="/cards/fill/:token" element={<SchoolCardCollectionPage />} />
+          <Route path="/cards/fill" element={<SchoolCardCollectionPage />} />
           <Route path="/track" element={<OrderTrackingPage />} />
 
           {/* Auth Routes */}
@@ -288,3 +291,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
