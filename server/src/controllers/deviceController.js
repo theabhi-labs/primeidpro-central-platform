@@ -245,6 +245,7 @@ class DeviceController {
     try {
       const email = req.body.email || req.body.accountId;
       const installationId = req.body.installationId || req.body.machineId;
+      const unsettledTokens = parseInt(req.body.unsettledTokens) || 0;
 
       if (!email && !installationId) {
         return ApiResponse.error(res, 'Email or Installation ID is required', 400);
@@ -269,7 +270,33 @@ class DeviceController {
         return ApiResponse.error(res, 'Center or User account not found', 404);
       }
 
-      const wallet = await CreditWallet.findOne({ centerId: center._id });
+      let wallet = await CreditWallet.findOne({ centerId: center._id });
+      if (!wallet) {
+        wallet = await CreditWallet.create({
+          centerId: center._id,
+          currentBalance: center.walletBalance || 20,
+          lifetimePurchased: 20,
+          lifetimeUsed: 0
+        });
+      }
+
+      // Deduct offline/walk-in unsettled tokens reported by desktop app
+      if (unsettledTokens > 0) {
+        try {
+          await creditLedgerService.debitJobPrint({
+            centerId: center._id,
+            jobId: 'OFFLINE_WALKIN',
+            photoCount: Math.ceil(unsettledTokens / 2),
+            creditCost: unsettledTokens,
+            idempotencyKey: `sync_debit_${installationId}_${Date.now()}`
+          });
+          // Re-fetch updated wallet
+          wallet = await CreditWallet.findOne({ centerId: center._id });
+        } catch (err) {
+          logger.warn(`[DeviceController] Failed to debit unsettled tokens for ${email}: ${err.message}`);
+        }
+      }
+
       const currentBalance = wallet ? wallet.currentBalance : (center.walletBalance ?? 0);
 
       // Also update device lastSeenAt if installationId provided
