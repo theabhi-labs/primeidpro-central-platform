@@ -351,6 +351,35 @@ class DeviceController {
   }
 
   /**
+   * Get Account Status for App
+   * GET /api/v1/app/account/status
+   */
+  async getAccountStatus(req, res) {
+    try {
+      const device = req.device;
+      
+      const center = await Center.findById(device.centerId);
+      if (!center) {
+        return ApiResponse.error(res, 'Center not found', 404);
+      }
+      
+      let wallet = await CreditWallet.findOne({ centerId: center._id });
+      const currentBalance = wallet ? wallet.currentBalance : (center.walletBalance ?? 0);
+
+      // If the center is suspended, blocked, or inactive, tell the app it is deactivated
+      const status = (center.status === 'ACTIVE' && center.isActive !== false) ? 'ACTIVE' : 'DEACTIVATED';
+
+      return ApiResponse.success(res, {
+        status,
+        balance: currentBalance
+      }, 'Account status retrieved');
+    } catch (err) {
+      logger.error(`[DeviceController] Account status error: ${err.message}`);
+      return ApiResponse.error(res, err.message, 500);
+    }
+  }
+
+  /**
    * Polls pending jobs for the bound center (Strict Tenant Isolation, Unpaid excluded)
    * GET /api/v1/app/pending-jobs
    */

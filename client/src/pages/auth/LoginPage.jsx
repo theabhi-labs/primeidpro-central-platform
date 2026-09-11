@@ -38,15 +38,7 @@ const LoginPage = () => {
     }
   };
 
-  const handleQuickFill = (role) => {
-    if (role === 'admin') {
-      setEmail('admin@primeidpro.online');
-      setPassword('AdminPassword2026!');
-    } else if (role === 'csc') {
-      setEmail('csc@primeidpro.online');
-      setPassword('CscPassword2026!');
-    }
-  };
+
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
@@ -73,30 +65,7 @@ const LoginPage = () => {
           </div>
         )}
 
-        {/* Demo Fast Login Buttons */}
-        <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block text-center">
-            Quick Fill Demo Credentials
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickFill('csc')}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-emerald-300 border border-emerald-500/20 flex items-center justify-center gap-1.5 transition-all"
-            >
-              <Store className="w-3.5 h-3.5" />
-              Demo CSC Studio
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('admin')}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-rose-300 border border-rose-500/20 flex items-center justify-center gap-1.5 transition-all"
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              Super Admin
-            </button>
-          </div>
-        </div>
+
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800/80 space-y-5 shadow-2xl backdrop-blur-xl">

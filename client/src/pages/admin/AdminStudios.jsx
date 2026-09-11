@@ -82,6 +82,22 @@ const AdminStudios = () => {
     }
   };
 
+  const handleToggleStatus = async (studio) => {
+    try {
+      const newStatus = !studio.isActive;
+      const res = await adminService.updateStudio(studio._id, {
+        isActive: newStatus
+      });
+
+      if (res.success) {
+        success(`Studio ${newStatus ? 'activated' : 'deactivated'} successfully`);
+        loadStudios();
+      }
+    } catch (err) {
+      error(err.formattedMessage || 'Failed to update studio status');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -179,7 +195,18 @@ const AdminStudios = () => {
                     <td className="py-3 px-4">
                       <Badge status={s.isActive ? 'ACTIVE' : 'BLOCKED'} size="sm" />
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-right flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleToggleStatus(s)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                          s.isActive 
+                            ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/20' 
+                            : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'
+                        }`}
+                        title={s.isActive ? 'Deactivate Studio' : 'Activate Studio'}
+                      >
+                        {s.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
                       <button
                         onClick={() => openEditModal(s)}
                         className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-400 hover:text-white transition-all"
