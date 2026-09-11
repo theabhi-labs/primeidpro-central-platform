@@ -344,7 +344,13 @@ class DeviceController {
         $and: [
           {
             $or: [
-              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED'] } },
+              { claimedByDeviceId: null },
+              { claimedByDeviceId: device._id }
+            ]
+          },
+          {
+            $or: [
+              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED', 'ACKNOWLEDGED'] } },
               { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
             ]
           }

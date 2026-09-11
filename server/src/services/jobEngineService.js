@@ -97,21 +97,32 @@ class JobEngineService {
   /**
    * Retrieves pending jobs for a specific studio center
    */
-  async getPendingJobsForCenter(centerId, limit = 10) {
-    return Job.find({
-      $or: [
-        { centerId },
-        { centerId: centerId ? centerId.toString() : null }
-      ],
-      $and: [
-        {
-          $or: [
-            { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED'] } },
-            { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
-          ]
-        }
-      ]
-    })
+  async getPendingJobsForCenter(centerId, deviceId = null, limit = 10) {
+    const filters = [
+      {
+        $or: [
+          { centerId },
+          { centerId: centerId ? centerId.toString() : null }
+        ]
+      },
+      {
+        $or: [
+          { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED', 'ACKNOWLEDGED'] } },
+          { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
+        ]
+      }
+    ];
+
+    if (deviceId) {
+      filters.push({
+        $or: [
+          { claimedByDeviceId: null },
+          { claimedByDeviceId: deviceId }
+        ]
+      });
+    }
+
+    return Job.find({ $and: filters })
       .sort({ createdAt: 1 })
       .limit(limit)
       .lean();

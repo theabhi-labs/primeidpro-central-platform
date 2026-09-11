@@ -118,7 +118,11 @@ class CenterController {
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(Number(limit))
-        .populate('jobId', 'jobCode jobStatus copies creditCost temporaryPhotoUrl photoExpiresAt isPhotoPurged')
+        .populate({
+          path: 'jobId',
+          select: 'jobCode jobStatus copies creditCost temporaryPhotoUrl photoExpiresAt isPhotoPurged claimedByDeviceId',
+          populate: { path: 'claimedByDeviceId', select: 'deviceName deviceId' }
+        })
         .lean();
 
       return ApiResponse.success(res, {
@@ -522,8 +526,9 @@ class CenterController {
         return ApiResponse.error(res, 'Device not found', 404);
       }
 
-      // Hard delete from collection so it disappears immediately from UI
-      await Device.deleteOne({ _id: device._id });
+      // Soft delete by setting status to REVOKED to trigger auto-logout and preserve metrics
+      device.status = 'REVOKED';
+      await device.save();
 
       try {
         await AuditLog.create({

@@ -62,7 +62,7 @@ const heartbeat = async (req, res, next) => {
  */
 const getPendingJobs = async (req, res, next) => {
   try {
-    const jobs = await jobEngineService.getPendingJobsForCenter(req.centerId);
+    const jobs = await jobEngineService.getPendingJobsForCenter(req.centerId, req.device._id);
 
     const formattedJobs = jobs.map((job) => {
       const photoUrl = job.temporaryPhotoUrl || job.photoUrl || '';
