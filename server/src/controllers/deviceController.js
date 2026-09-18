@@ -406,14 +406,14 @@ class DeviceController {
           },
           {
             $or: [
-              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED', 'ACKNOWLEDGED'] } },
-              { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
+              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED', 'ACKNOWLEDGED', 'CREATED'] } },
+              { paymentStatus: { $in: ['PAID', 'PENDING'] }, jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
             ]
           }
         ]
       })
         .sort({ createdAt: 1 })
-        .limit(10)
+        .limit(20)
         .lean();
 
       // Populate multi-photo JobItems for each job with signed download URLs
@@ -599,18 +599,29 @@ class DeviceController {
 
       const isObjectId = jobId && /^[0-9a-fA-F]{24}$/.test(jobId);
       const query = {
-        $or: [
-          { centerId: device.centerId },
-          { centerId: device.centerId.toString() }
-        ],
-        jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'CREATED'] },
-        claimedByDeviceId: null
+        $and: [
+          {
+            $or: [
+              { centerId: device.centerId },
+              { centerId: device.centerId ? device.centerId.toString() : null }
+            ]
+          },
+          {
+            jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'CREATED', 'ACKNOWLEDGED', 'DOWNLOADING', 'PROCESSING', 'READY'] }
+          },
+          {
+            $or: [
+              { claimedByDeviceId: null },
+              { claimedByDeviceId: device._id }
+            ]
+          }
+        ]
       };
 
       if (isObjectId) {
-        query._id = jobId;
+        query.$and.push({ _id: jobId });
       } else {
-        query.jobCode = jobId;
+        query.$and.push({ jobCode: jobId });
       }
 
       // Atomic conditional claim
