@@ -41,7 +41,11 @@ module.exports = {
     STAMP_PHOTO: 'STAMP_PHOTO',
     PVC_ID_CARD: 'PVC_ID_CARD',
     CERTIFICATE: 'CERTIFICATE',
-    CUSTOM_ID: 'CUSTOM_ID'
+    CUSTOM_ID: 'CUSTOM_ID',
+    PRINT_DOCUMENT: 'PRINT_DOCUMENT',
+    ID_CARD: 'ID_CARD',
+    PHOTO: 'PHOTO',
+    GENERAL_DOCUMENT: 'GENERAL_DOCUMENT'
   },
   PAPER_SIZES: {
     FOUR_BY_SIX: '4x6',
@@ -76,6 +80,28 @@ module.exports = {
       customerPriceInr: 50,
       cscCreditCost: 5,
       aspectRatio: 35 / 45
+    },
+    {
+      serviceType: 'PRINT_DOCUMENT',
+      name: 'ID Card & Document Print (300 DPI)',
+      description: 'Ultra-HD document and ID card print with automatic dual-side cutting at 300 DPI.',
+      dimensionsMm: { width: 85.6, height: 54 },
+      defaultCopies: 1,
+      paperSize: 'A4',
+      customerPriceInr: 10,
+      cscCreditCost: 1,
+      aspectRatio: 85.6 / 54
+    },
+    {
+      serviceType: 'ID_CARD',
+      name: 'PVC / Paper ID Card Print',
+      description: 'CR80 standard 85.6x54 mm card print with auto-split and quality enhancement.',
+      dimensionsMm: { width: 85.6, height: 54 },
+      defaultCopies: 1,
+      paperSize: 'A4',
+      customerPriceInr: 10,
+      cscCreditCost: 1,
+      aspectRatio: 85.6 / 54
     },
     {
       serviceType: 'VISA_PHOTO',

@@ -227,10 +227,12 @@ const createCustomerOrder = async (req, res, next) => {
       customerName,
       customerPhone,
       customerEmail,
-      serviceType,
+      serviceType = 'PASSPORT_PHOTO',
       copies,
       storageKey,
       photoUrl,
+      photos = [],
+      items = [],
       cropSettings,
       backgroundColor,
       paymentMethod = 'RAZORPAY'
@@ -246,8 +248,18 @@ const createCustomerOrder = async (req, res, next) => {
     const pricing = await PricingRule.findOne({ serviceType, status: 'ACTIVE' });
     const template = pricing || DEFAULT_TEMPLATES.find((t) => t.serviceType === serviceType) || DEFAULT_TEMPLATES[0];
 
-    const priceInr = template.customerPriceInr;
-    const creditCost = template.cscCreditCost;
+    const allItems = Array.isArray(photos) && photos.length > 0
+      ? photos
+      : (Array.isArray(items) && items.length > 0 ? items : []);
+
+    const itemCount = allItems.length > 0 ? allItems.length : 1;
+    const baseCopies = Number(copies) || template.defaultCopies || 1;
+    const unitPrice = template.customerPriceInr;
+    const priceInr = serviceType === 'PRINT_DOCUMENT' || serviceType === 'ID_CARD'
+      ? itemCount * baseCopies * unitPrice
+      : unitPrice;
+
+    const creditCost = (template.cscCreditCost || 1) * itemCount;
 
     // Generate unique Job Code & 4-digit PIN
     const randomNum = Math.floor(10000 + Math.random() * 90000);
@@ -269,6 +281,20 @@ const createCustomerOrder = async (req, res, next) => {
       });
     }
 
+    const firstPhotoUrl = photoUrl || (allItems.length > 0 ? (allItems[0].photoUrl || allItems[0].downloadUrl) : '');
+    const firstStorageKey = storageKey || (allItems.length > 0 ? allItems[0].storageKey : '');
+
+    // Format itemsData
+    const itemsData = allItems.map((it, idx) => ({
+      photoIndex: it.photoIndex || (idx + 1),
+      storageKey: it.storageKey || '',
+      photoUrl: it.photoUrl || it.downloadUrl || '',
+      originalFileName: it.originalFileName || `file_${idx + 1}.jpg`,
+      cropSettings: it.cropSettings || {},
+      backgroundColor: it.backgroundColor || '#FFFFFF',
+      copies: it.copies || baseCopies
+    }));
+
     // Create Job in Database
     const job = await jobEngineService.createJob({
       jobCode,
@@ -278,22 +304,24 @@ const createCustomerOrder = async (req, res, next) => {
       customerPhone,
       customerEmail: customerEmail || '',
       centerId: center._id,
-      serviceType: template.serviceType,
+      serviceType: template.serviceType || serviceType,
       serviceName: template.name,
-      paperSize: template.paperSize || PAPER_SIZES.FOUR_BY_SIX,
-      copies: copies || template.defaultCopies,
+      paperSize: template.paperSize || PAPER_SIZES.A4,
+      copies: baseCopies,
       priceInr,
       creditCost,
-      temporaryPhotoUrl: photoUrl,
-      storageKey,
+      temporaryPhotoUrl: firstPhotoUrl,
+      storageKey: firstStorageKey,
+      itemsData,
+      itemsCount: itemsData.length || 1,
       cropSettings: cropSettings || {},
       backgroundColor: backgroundColor || '#FFFFFF',
       paymentMethod,
       razorpayOrderId: razorpayOrder ? razorpayOrder.id : null
     });
 
-    if (storageKey) {
-      await storageService.claimUploadSession(storageKey, {
+    if (firstStorageKey) {
+      await storageService.claimUploadSession(firstStorageKey, {
         jobId: job._id,
         centerId: center._id
       });

@@ -54,7 +54,7 @@ const OrderSchema = new mongoose.Schema(
     },
     serviceType: {
       type: String,
-      enum: ['PASSPORT_PHOTO', 'VISA_PHOTO', 'STAMP_PHOTO', 'PVC_ID_CARD', 'CERTIFICATE'],
+      enum: ['PASSPORT_PHOTO', 'VISA_PHOTO', 'STAMP_PHOTO', 'PVC_ID_CARD', 'CERTIFICATE', 'PHOTO', 'ID_CARD', 'PRINT_DOCUMENT', 'GENERAL_DOCUMENT', 'CUSTOM_ID'],
       default: 'PASSPORT_PHOTO',
       index: true
     },

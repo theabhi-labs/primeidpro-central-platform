@@ -66,6 +66,7 @@ const getPendingJobs = async (req, res, next) => {
 
     const formattedJobs = jobs.map((job) => {
       const photoUrl = job.temporaryPhotoUrl || job.photoUrl || '';
+      const items = Array.isArray(job.itemsData) && job.itemsData.length > 0 ? job.itemsData : [];
       return {
         id: job._id.toString(),
         jobId: job._id.toString(),
@@ -83,6 +84,8 @@ const getPendingJobs = async (req, res, next) => {
         photoUrl: photoUrl,
         downloadUrl: photoUrl,
         imageUrl: photoUrl,
+        items: items,
+        photos: items,
         cropSettings: job.cropSettings,
         backgroundColor: job.backgroundColor,
         createdAt: job.createdAt
