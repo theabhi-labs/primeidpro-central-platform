@@ -16,12 +16,12 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|webp/;
+    const allowed = /jpeg|jpg|png|webp|pdf/;
     const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
-    if (allowed.test(ext) || file.mimetype.startsWith('image/')) {
+    if (allowed.test(ext) || file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Only image files (JPEG, PNG, WEBP) are supported'));
+      cb(new Error('Only image files (JPEG, PNG, WEBP) and PDF documents are supported'));
     }
   }
 });

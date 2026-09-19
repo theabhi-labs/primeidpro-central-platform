@@ -406,8 +406,8 @@ class DeviceController {
           },
           {
             $or: [
-              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED', 'ACKNOWLEDGED', 'CREATED'] } },
-              { paymentStatus: { $in: ['PAID', 'PENDING'] }, jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED'] } }
+              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED', 'ACKNOWLEDGED'] } },
+              { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED', 'CREATED'] } }
             ]
           }
         ]
@@ -607,13 +607,10 @@ class DeviceController {
             ]
           },
           {
-            jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'CREATED', 'ACKNOWLEDGED', 'DOWNLOADING', 'PROCESSING', 'READY'] }
+            jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'CONFIRMED', 'CREATED'] }
           },
           {
-            $or: [
-              { claimedByDeviceId: null },
-              { claimedByDeviceId: device._id }
-            ]
+            claimedByDeviceId: null
           }
         ]
       };
