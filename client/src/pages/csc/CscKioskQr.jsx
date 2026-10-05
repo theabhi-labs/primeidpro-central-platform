@@ -75,7 +75,7 @@ const CscKioskQr = () => {
 
       {/* Printable Poster Card */}
       {qrData ? (
-        <div className="printable-poster p-8 sm:p-12 rounded-3xl bg-white text-slate-900 border border-slate-200 text-center shadow-2xl space-y-6 max-w-md mx-auto print:shadow-none print:border-none">
+        <div className="printable-poster p-8 sm:p-10 rounded-3xl bg-white text-slate-900 border border-slate-200 text-center shadow-2xl space-y-5 max-w-md mx-auto print:shadow-none">
           {/* Header */}
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-2">
@@ -93,33 +93,33 @@ const CscKioskQr = () => {
           </div>
 
           {/* QR Code Container */}
-          <div className="my-4 flex justify-center">
-            <div className="p-4 bg-white border-4 border-indigo-600 rounded-3xl shadow-xl inline-block">
+          <div className="my-3 flex justify-center">
+            <div className="p-3.5 bg-white border-4 border-indigo-600 rounded-3xl shadow-xl inline-block print:shadow-none print:p-2.5">
               <img
                 src={qrData.qrDataUrl}
                 alt="Kiosk QR Code"
-                className="w-64 h-64 object-contain"
+                className="w-56 h-56 object-contain print:w-48 print:h-48"
               />
             </div>
           </div>
 
           {/* Instruction Steps */}
-          <div className="p-4 bg-slate-50 rounded-2xl text-left border border-slate-200 text-xs space-y-2 font-semibold text-slate-700">
+          <div className="p-3.5 bg-slate-50 rounded-2xl text-left border border-slate-200 text-xs space-y-2 font-semibold text-slate-700 print:p-3 print:space-y-1.5">
             <div className="flex items-center gap-2.5">
-              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] flex items-center justify-center font-bold">1</span>
+              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] flex items-center justify-center font-bold flex-shrink-0">1</span>
               <span>Scan QR code with your mobile camera</span>
             </div>
             <div className="flex items-center gap-2.5">
-              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] flex items-center justify-center font-bold">2</span>
+              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] flex items-center justify-center font-bold flex-shrink-0">2</span>
               <span>Upload photo &amp; select size (Passport / Visa)</span>
             </div>
             <div className="flex items-center gap-2.5">
-              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] flex items-center justify-center font-bold">3</span>
+              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] flex items-center justify-center font-bold flex-shrink-0">3</span>
               <span>Pay online &amp; collect instant prints at this counter</span>
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-500 font-mono break-all">
+          <div className="text-[11px] text-slate-500 font-mono break-all pt-1">
             {displayKioskUrl}
           </div>
         </div>

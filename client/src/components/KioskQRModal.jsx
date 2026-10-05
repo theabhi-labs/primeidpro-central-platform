@@ -47,15 +47,15 @@ const KioskQRModal = ({ isOpen, onClose, qrData }) => {
           {/* Instruction Steps */}
           <div className="mt-4 p-3 bg-slate-50 rounded-xl text-left border border-slate-200 text-xs space-y-1.5 font-medium text-slate-700">
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold flex-shrink-0">1</span>
               <span>Scan QR code with your mobile camera</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold flex-shrink-0">2</span>
               <span>Upload photo & select Passport/Visa format</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">3</span>
+              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold flex-shrink-0">3</span>
               <span>Pay online & receive physical prints instantly</span>
             </div>
           </div>

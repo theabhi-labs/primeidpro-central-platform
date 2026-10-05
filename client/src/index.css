@@ -81,18 +81,52 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 12mm 10mm;
   }
 
-  html, body, #root {
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html,
+  body {
     background: #ffffff !important;
     background-color: #ffffff !important;
     color: #0f172a !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
+  }
+
+  /* Reset outer application wrappers so they don't consume space or offset printing */
+  #root,
+  #root > div,
+  .flex,
+  .flex-col,
+  .flex-1,
+  main,
+  .space-y-6 {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    display: block !important;
+    position: static !important;
+    float: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
   }
 
   /* Hide entire page structure */
@@ -116,24 +150,41 @@
   [role="navigation"],
   .toast-container {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* Center the printable poster neatly on the printed page */
+  /* Center the printable poster neatly on a single page without cutting */
   .printable-poster {
-    position: absolute !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    display: block !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
     width: 100% !important;
-    max-width: 480px !important;
+    max-width: 440px !important;
+    margin: 20px auto 0 auto !important;
     background: #ffffff !important;
     color: #0f172a !important;
-    border: 3px solid #6366f1 !important;
-    border-radius: 28px !important;
-    padding: 32px !important;
+    border: 3px solid #4f46e5 !important;
+    border-radius: 24px !important;
+    padding: 24px 20px !important;
     box-shadow: none !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .printable-poster img {
+    max-width: 220px !important;
+    max-height: 220px !important;
     margin: 0 auto !important;
   }
 }
