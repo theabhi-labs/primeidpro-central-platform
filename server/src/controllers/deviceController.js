@@ -391,25 +391,16 @@ class DeviceController {
         return ApiResponse.error(res, 'This device authorization is revoked or suspended', 403);
       }
 
-      // Fetch ANY job for this center that is paid or queued and not completed
+      // Fetch ALL active incoming jobs for this center directly to desktop app (Pay at Counter & Online)
       const jobs = await Job.find({
         $or: [
           { centerId: device.centerId },
           { centerId: device.centerId.toString() }
         ],
-        $and: [
-          {
-            $or: [
-              { claimedByDeviceId: null },
-              { claimedByDeviceId: device._id }
-            ]
-          },
-          {
-            $or: [
-              { jobStatus: { $in: ['QUEUED', 'SENT_TO_APP', 'DISPATCHED', 'DOWNLOADING', 'PROCESSING', 'READY', 'PRINTING', 'CONFIRMED', 'ACKNOWLEDGED'] } },
-              { paymentStatus: 'PAID', jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED', 'CREATED'] } }
-            ]
-          }
+        jobStatus: { $nin: ['COMPLETED', 'FAILED', 'CANCELLED', 'ARCHIVED', 'PURGED'] },
+        $or: [
+          { claimedByDeviceId: null },
+          { claimedByDeviceId: device._id }
         ]
       })
         .sort({ createdAt: 1 })

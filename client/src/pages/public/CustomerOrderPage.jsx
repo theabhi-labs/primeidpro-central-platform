@@ -555,445 +555,182 @@ export default function CustomerOrderPage() {
         />
 
         {/* ========================================================================= */}
-        {/* PROMINENT SERVICE SELECTOR CARDS */}
+        {/* STEP 1: PHOTO SELECTION */}
         {/* ========================================================================= */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Layers size={13} className="text-cyan-400" /> Select Printing Service
-          </label>
-          <div className="grid grid-cols-2 gap-2.5">
-            {/* Service 1: Passport Photos */}
-            <button
-              type="button"
-              onClick={() => setOrderIntent('PASSPORT')}
-              className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 cursor-pointer ${
-                orderIntent === 'PASSPORT'
-                  ? 'bg-gradient-to-br from-cyan-950/80 to-blue-950/80 border-cyan-400 text-white shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-400/50'
-                  : 'bg-slate-900/90 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className={`p-2 rounded-xl ${orderIntent === 'PASSPORT' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-cyan-400'}`}>
-                  <Camera size={18} />
-                </div>
-                <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${orderIntent === 'PASSPORT' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30' : 'bg-slate-800 text-slate-500'}`}>
-                  AI Clean
-                </span>
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
+                1
               </div>
-              <div>
-                <div className="text-xs font-black text-white leading-tight">Passport Photo</div>
-                <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">Selfie / Portrait sizes</div>
-              </div>
-            </button>
-
-            {/* Service 2: Print ID Card / Document */}
-            <button
-              type="button"
-              onClick={() => setOrderIntent('PRINT')}
-              className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 cursor-pointer ${
-                orderIntent === 'PRINT'
-                  ? 'bg-gradient-to-br from-cyan-950/80 to-blue-950/80 border-cyan-400 text-white shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-400/50'
-                  : 'bg-slate-900/90 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className={`p-2 rounded-xl ${orderIntent === 'PRINT' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-cyan-400'}`}>
-                  <Printer size={18} />
-                </div>
-                <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${orderIntent === 'PRINT' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30' : 'bg-slate-800 text-slate-500'}`}>
-                  Auto-Cut
-                </span>
-              </div>
-              <div>
-                <div className="text-xs font-black text-white leading-tight">ID Card & Doc Print</div>
-                <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">Aadhaar, PAN, PDF</div>
-              </div>
-            </button>
+              <h2 className="text-sm font-extrabold text-white">Select or Take Photo</h2>
+            </div>
+            <span className="text-[11px] font-medium text-cyan-400 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Auto AI Clean
+            </span>
           </div>
+
+          {!photoPreview ? (
+            <div className="space-y-3">
+              {/* Dual Action Selection: Camera vs Gallery */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* 1. Camera Option */}
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="p-5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2.5 text-center group shadow-lg shadow-cyan-950/20 cursor-pointer"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                    <Camera className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-white group-hover:text-cyan-300 transition-colors">
+                      Take Selfie
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      Camera Photo
+                    </div>
+                  </div>
+                </button>
+
+                {/* 2. Gallery / File Upload Option */}
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="p-5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-dashed border-blue-500/40 hover:border-blue-400 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2.5 text-center group shadow-lg shadow-blue-950/20 cursor-pointer"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                    <FolderOpen className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-white group-hover:text-blue-300 transition-colors">
+                      Choose Photo
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      Gallery / Files
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <p className="text-center text-[11px] text-slate-400">
+                Background will be automatically removed and replaced with clear white/blue.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center max-h-64 group">
+                <img
+                  src={photoPreview}
+                  alt="Customer Photo"
+                  className="max-h-60 w-auto object-contain rounded-xl p-2"
+                />
+                {isUploadingPhoto && (
+                  <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center text-cyan-400 text-xs font-bold gap-2">
+                    <RefreshCw className="w-6 h-6 animate-spin" />
+                    <span>Uploading Photo...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Options to Change Photo */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 bg-slate-950/60 p-2.5 rounded-2xl border border-slate-800">
+                <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 font-bold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>Photo Selected</span>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Retake</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5 text-blue-400" />
+                    <span>From Gallery</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ========================================================================= */}
-        {/* SECTION A: PASSPORT PHOTO WORKFLOW */}
+        {/* STEP 2: CHOOSE QUANTITY */}
         {/* ========================================================================= */}
-        {orderIntent === 'PASSPORT' && (
-          <>
-            {/* STEP 1: PHOTO SELECTION */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
-                    1
-                  </div>
-                  <h2 className="text-sm font-extrabold text-white">Select or Take Photo</h2>
-                </div>
-                <span className="text-[11px] font-medium text-cyan-400 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Auto AI Clean
-                </span>
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
+                2
               </div>
+              <h2 className="text-sm font-extrabold text-white">How Many Photos?</h2>
+            </div>
+            <span className="text-xs font-bold text-slate-400">
+              ₹{pricePerUnit} / photo
+            </span>
+          </div>
 
-              {!photoPreview ? (
-                <div className="space-y-3">
-                  {/* Dual Action Selection: Camera vs Gallery */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* 1. Camera Option */}
-                    <button
-                      type="button"
-                      onClick={() => cameraInputRef.current?.click()}
-                      className="p-5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2.5 text-center group shadow-lg shadow-cyan-950/20 cursor-pointer"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-                        <Camera className="w-7 h-7" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-black text-white group-hover:text-cyan-300 transition-colors">
-                          Take Selfie
-                        </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
-                          Camera Photo
-                        </div>
-                      </div>
-                    </button>
+          {/* Quick Presets */}
+          <div className="grid grid-cols-4 gap-2">
+            {quickPresets.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setCopies(preset)}
+                className={`py-2.5 px-2 rounded-2xl border text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                  copies === preset
+                    ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/20 scale-[1.02]'
+                    : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                }`}
+              >
+                <span>{preset} Photos</span>
+                <span className={`text-[10px] font-bold ${copies === preset ? 'text-slate-900' : 'text-slate-400'}`}>
+                  ₹{preset * pricePerUnit}
+                </span>
+              </button>
+            ))}
+          </div>
 
-                    {/* 2. Gallery / File Upload Option */}
-                    <button
-                      type="button"
-                      onClick={() => galleryInputRef.current?.click()}
-                      className="p-5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-dashed border-blue-500/40 hover:border-blue-400 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2.5 text-center group shadow-lg shadow-blue-950/20 cursor-pointer"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-                        <FolderOpen className="w-7 h-7" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-black text-white group-hover:text-blue-300 transition-colors">
-                          Choose Photo
-                        </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
-                          Gallery / Files
-                        </div>
-                      </div>
-                    </button>
-                  </div>
+          {/* Custom Stepper */}
+          <div className="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5">
+            <button
+              type="button"
+              disabled={copies <= minCopies}
+              onClick={() => setCopies((prev) => Math.max(minCopies, prev - 1))}
+              className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-white flex items-center justify-center transition-all cursor-pointer"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
 
-                  <p className="text-center text-[11px] text-slate-400">
-                    Background will be automatically removed and replaced with clear white/blue.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center max-h-64 group">
-                    <img
-                      src={photoPreview}
-                      alt="Customer Photo"
-                      className="max-h-60 w-auto object-contain rounded-xl p-2"
-                    />
-                    {isUploadingPhoto && (
-                      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center text-cyan-400 text-xs font-bold gap-2">
-                        <RefreshCw className="w-6 h-6 animate-spin" />
-                        <span>Uploading Photo...</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Options to Change Photo */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2 bg-slate-950/60 p-2.5 rounded-2xl border border-slate-800">
-                    <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 font-bold">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                      <span>Photo Selected</span>
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <button
-                        type="button"
-                        onClick={() => cameraInputRef.current?.click()}
-                        className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-                      >
-                        <Camera className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Retake</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => galleryInputRef.current?.click()}
-                        className="flex-1 sm:flex-initial px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-                      >
-                        <FolderOpen className="w-3.5 h-3.5 text-blue-400" />
-                        <span>From Gallery</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+            <div className="text-center">
+              <span className="text-lg font-black text-white">{copies}</span>
+              <span className="text-xs text-slate-400 ml-1.5 font-bold">Passport Photos</span>
             </div>
 
-            {/* STEP 2: CHOOSE QUANTITY */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
-                    2
-                  </div>
-                  <h2 className="text-sm font-extrabold text-white">How Many Photos?</h2>
-                </div>
-                <span className="text-xs font-bold text-slate-400">
-                  ₹{pricePerUnit} / photo
-                </span>
-              </div>
+            <button
+              type="button"
+              disabled={copies >= maxCopies}
+              onClick={() => setCopies((prev) => Math.min(maxCopies, prev + 1))}
+              className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-white flex items-center justify-center transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
 
-              {/* Quick Presets */}
-              <div className="grid grid-cols-4 gap-2">
-                {quickPresets.map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setCopies(preset)}
-                    className={`py-2.5 px-2 rounded-2xl border text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
-                      copies === preset
-                        ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/20 scale-[1.02]'
-                        : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
-                    }`}
-                  >
-                    <span>{preset} Photos</span>
-                    <span className={`text-[10px] font-bold ${copies === preset ? 'text-slate-900' : 'text-slate-400'}`}>
-                      ₹{preset * pricePerUnit}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Custom Stepper */}
-              <div className="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5">
-                <button
-                  type="button"
-                  disabled={copies <= minCopies}
-                  onClick={() => setCopies((prev) => Math.max(minCopies, prev - 1))}
-                  className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-white flex items-center justify-center transition-all cursor-pointer"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-
-                <div className="text-center">
-                  <span className="text-lg font-black text-white">{copies}</span>
-                  <span className="text-xs text-slate-400 ml-1.5 font-bold">Passport Photos</span>
-                </div>
-
-                <button
-                  type="button"
-                  disabled={copies >= maxCopies}
-                  onClick={() => setCopies((prev) => Math.min(maxCopies, prev + 1))}
-                  className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-white flex items-center justify-center transition-all cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Live Total Display */}
-              <div className="bg-cyan-950/40 border border-cyan-500/30 rounded-2xl p-3 flex items-center justify-between">
-                <span className="text-xs font-bold text-cyan-300">Total Amount:</span>
-                <span className="text-xl font-black text-cyan-400">₹{passportTotalPrice}</span>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* ========================================================================= */}
-        {/* SECTION B: ID CARD & DOCUMENT PRINT WORKFLOW */}
-        {/* ========================================================================= */}
-        {orderIntent === 'PRINT' && (
-          <>
-            {/* STEP 1: DOCUMENT / ID CARD UPLOAD */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
-                    1
-                  </div>
-                  <h2 className="text-sm font-extrabold text-white">Upload ID Cards or PDF</h2>
-                </div>
-                <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1">
-                  <Scan className="w-3 h-3" /> Auto Side-by-Side Cut
-                </span>
-              </div>
-
-              {/* Upload Options: Camera Capture vs File/Gallery */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* 1. Take Card Photo (Camera) */}
-                <button
-                  type="button"
-                  onClick={() => cardCameraInputRef.current?.click()}
-                  className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2 text-center group cursor-pointer"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Camera className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-black text-white group-hover:text-cyan-300">
-                      Scan / Camera
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      Photo of Aadhaar / Card
-                    </div>
-                  </div>
-                </button>
-
-                {/* 2. Choose Gallery / PDF File */}
-                <button
-                  type="button"
-                  onClick={() => docFileInputRef.current?.click()}
-                  className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-dashed border-blue-500/40 hover:border-blue-400 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-2 text-center group cursor-pointer"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FolderOpen className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-black text-white group-hover:text-blue-300">
-                      Choose Files
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      PDF, Images, Gallery
-                    </div>
-                  </div>
-                </button>
-              </div>
-
-              {/* Uploading Spinner */}
-              {isUploadingPrintFiles && (
-                <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center gap-2 text-cyan-400 text-xs font-bold animate-pulse">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Uploading files to studio queue...</span>
-                </div>
-              )}
-
-              {/* Uploaded Files Staging List */}
-              {printFiles.length > 0 && (
-                <div className="space-y-2 pt-2">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-bold text-slate-200">Uploaded Files ({printFiles.length}):</span>
-                    <button 
-                      type="button"
-                      onClick={() => docFileInputRef.current?.click()} 
-                      className="text-cyan-400 font-bold hover:underline cursor-pointer flex items-center gap-1 text-[11px]"
-                    >
-                      <Plus size={12} /> Add More Files
-                    </button>
-                  </div>
-
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {printFiles.map((pf, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800 gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {pf.isPdf ? (
-                            <div className="w-9 h-9 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center flex-shrink-0">
-                              <FileText size={18} />
-                            </div>
-                          ) : (
-                            <div className="w-9 h-9 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 flex-shrink-0">
-                              <img src={pf.previewUrl || pf.photoUrl} alt="doc" className="w-full h-full object-cover" />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-white truncate max-w-[190px] sm:max-w-[240px]">
-                              {pf.originalFileName}
-                            </p>
-                            <span className="text-[10px] text-slate-400 font-mono">
-                              {pf.isPdf ? 'PDF Document' : 'ID Card / Image'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePrintFile(idx)}
-                          className="text-slate-500 hover:text-red-400 p-1 rounded-lg hover:bg-slate-900 transition-colors cursor-pointer"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Informative Tip */}
-              <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2">
-                <Sparkles size={16} className="text-cyan-400 flex-shrink-0 mt-0.5" />
-                <span>
-                  <strong>Single image with Front & Back?</strong> No problem! The system will automatically cut Front & Back and place them side-by-side at standard 300 DPI card size.
-                </span>
-              </div>
-            </div>
-
-            {/* STEP 2: PRINT OPTIONS & COPIES */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">
-                    2
-                  </div>
-                  <h2 className="text-sm font-extrabold text-white">Print Options & Copies</h2>
-                </div>
-                <span className="text-xs font-bold text-slate-400">
-                  ₹{pricePerDoc} / doc
-                </span>
-              </div>
-
-              {/* Print Mode Buttons */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDocPrintType('ID_CARD')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
-                    docPrintType === 'ID_CARD'
-                      ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-md font-black'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  🪪 ID Card Standard
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDocPrintType('GENERAL_DOC')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
-                    docPrintType === 'GENERAL_DOC'
-                      ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-md font-black'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  📄 Full Page / PDF
-                </button>
-              </div>
-
-              {/* Copies Stepper */}
-              <div className="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5">
-                <button
-                  type="button"
-                  disabled={docCopies <= 1}
-                  onClick={() => setDocCopies((prev) => Math.max(1, prev - 1))}
-                  className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-white flex items-center justify-center transition-all cursor-pointer"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-
-                <div className="text-center">
-                  <span className="text-lg font-black text-white">{docCopies}</span>
-                  <span className="text-xs text-slate-400 ml-1.5 font-bold">Copy / Copies each</span>
-                </div>
-
-                <button
-                  type="button"
-                  disabled={docCopies >= 10}
-                  onClick={() => setDocCopies((prev) => Math.min(10, prev + 1))}
-                  className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-white flex items-center justify-center transition-all cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Total Summary */}
-              <div className="bg-cyan-950/40 border border-cyan-500/30 rounded-2xl p-3 flex items-center justify-between">
-                <span className="text-xs font-bold text-cyan-300">Total Amount:</span>
-                <span className="text-xl font-black text-cyan-400">₹{docTotalPrice}</span>
-              </div>
-            </div>
-          </>
-        )}
+          {/* Live Total Display */}
+          <div className="bg-cyan-950/40 border border-cyan-500/30 rounded-2xl p-3 flex items-center justify-between">
+            <span className="text-xs font-bold text-cyan-300">Total Amount:</span>
+            <span className="text-xl font-black text-cyan-400">₹{passportTotalPrice}</span>
+          </div>
+        </div>
 
         {/* ========================================================================= */}
         {/* STEP 3: PAYMENT METHOD */}
@@ -1066,7 +803,7 @@ export default function CustomerOrderPage() {
         {/* SUBMIT BUTTON */}
         <button
           type="button"
-          disabled={loading || isUploadingPhoto || isUploadingPrintFiles}
+          disabled={loading || isUploadingPhoto}
           onClick={handleSubmitOrder}
           className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] disabled:opacity-50 text-slate-950 font-black text-base transition-all shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 border border-cyan-300/40 cursor-pointer"
         >
@@ -1075,16 +812,10 @@ export default function CustomerOrderPage() {
               <RefreshCw className="w-5 h-5 animate-spin" />
               <span>Sending Order to Studio...</span>
             </>
-          ) : orderIntent === 'PASSPORT' ? (
+          ) : (
             <>
               <Sparkles className="w-5 h-5" />
               <span>Print {copies} Photos • ₹{passportTotalPrice}</span>
-              <ArrowRight className="w-5 h-5 ml-1" />
-            </>
-          ) : (
-            <>
-              <Printer className="w-5 h-5" />
-              <span>Send {printFiles.length || 0} File(s) to Printer • ₹{docTotalPrice}</span>
               <ArrowRight className="w-5 h-5 ml-1" />
             </>
           )}
